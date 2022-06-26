@@ -134,6 +134,7 @@ static void c64_clock_config()
 
     // No prescaler, timer runs at ABP2 timer clock speed (168 MHz)
     TIM1->PSC = 0;
+    TIM1->ARR = 0xFFFF;
 
     /**** Setup timer 1 to measure clock speed in CCR1 and duty cycle in CCR2 ****/
 
