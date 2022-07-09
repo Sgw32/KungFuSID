@@ -61,6 +61,13 @@ defined in linker script */
 Reset_Handler:
   ldr   sp, =_estack     /* set stack pointer */
 
+  ldr r0, =#0x40023844 /* RCC->APB2ENR */
+  ldr r1, [r0]
+  ldr r2, =#0x00004000 /* RCC_APB2ENR_SYSCFGEN */
+  orrs r1, r1, r2
+  str r1, [r0]
+  dsb
+
 /* Copy firmware code to the start of SRAM1 */
   ldr r0, =#0x20000000 /* Start of SRAM1 */
   ldr r1, =48*1024     /* Firmware size  */
