@@ -1,5 +1,18 @@
-# Kung Fu Flash
+# Kung Fu Flash GD32 version
+
 Cartridge for the Commodore 64 that packs a punch.
+
+Patched by avrem for GD32F405RGT6 microcontroller.
+Patch includes:
+* ARR timer fix for GD32
+* Memory remap fix (since KFF is running from RAM)
+
+see commits for more information.
+GD32 is more available than official STM32 making it better and cheaper for use. 
+
+Known issues:
+
+* EasyFlash packs are not working. I do not know why. 
 
 ![Kung Fu Flash Launcher](pics/launcher.jpg)
 
