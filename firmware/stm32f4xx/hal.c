@@ -20,9 +20,6 @@
 #include "system_stm32f4xx.c"
 #include "hal.h"
 #include "c64_interface.c"
-#include "diskio.c"
-#include "usb.c"
-#include "flash.c"
 
 /*************************************************
 * Configure system clock to 168 MHz
@@ -167,7 +164,6 @@ static void crc_config(void)
 
 NO_RETURN system_restart(void)
 {
-    filesystem_unmount();
     led_off();
 
     c64_disable();
@@ -177,7 +173,6 @@ NO_RETURN system_restart(void)
 
 NO_RETURN restart_to_menu(void)
 {
-    set_menu_signature();
     system_restart();
 }
 
@@ -199,6 +194,5 @@ static void configure_system(void)
 
     crc_config();
 
-    usb_config();
     c64_interface_config();
 }

@@ -197,34 +197,6 @@ static void c64_diag_handler(void)
     TIM1->SR = ~TIM_SR_CC3IF;
     // Ensure interrupt flag is cleared
     (void)TIM1->SR;
-
-    if (diag_state == DIAG_RUN)
-    {
-        // Count number of interrupts within 1 second (168 MHz)
-        if (DWT->CYCCNT < 168000000)
-        {
-            // Check for timer overflow (no phi2 clock)
-            if (TIM1->SR & TIM_SR_CC4IF)
-            {
-                TIM1->SR = ~TIM_SR_CC4IF;
-            }
-            else
-            {
-                diag_phi2_freq++;
-            }
-        }
-        else
-        {
-            diag_state = DIAG_STOP;
-        }
-    }
-    else if (diag_state == DIAG_INIT)
-    {
-        // Start measuring
-        DWT->CYCCNT = 0;
-        diag_phi2_freq = 0;
-        diag_state = DIAG_RUN;
-    }
 }
 
 /*************************************************
@@ -361,8 +333,7 @@ void EXTI4_IRQHandler(void)
 {
     if (EXTI->PR & EXTI_PR_PR4)
     {
-        c64_disable();
-        restart_to_menu();
+        c64_disable();    
     }
 }
 

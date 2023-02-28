@@ -23,86 +23,23 @@
 #include <stdbool.h>
 #include <string.h>
 #include "common.h"
-#include "commands.h"
-#include "print.h"
 #include "memory.h"
 #include "hal.c"
-#include "print.c"
-#include "filesystem.c"
-#include "file_types.c"
+#include "print.c"     
+#include "file_types.h"
 #include "cartridge.c"
-#include "commands.c"
-#include "disk_drive.h"
-#include "menu.c"
-#include "disk_drive.c"
-#include "eapi.c"
-#include "diagnostic.c"
 
 int main(void)
 {
     configure_system();
-    log("System configured\n");
-    c64_launcher_mode();
+    //c64_launcher_mode();
+    crt_ptr = CRT_LAUNCHER_BANK;
+    kff_init();
+    C64_INSTALL_HANDLER(kff_handler);
+    c64_enable();
 
-    bool sd_msg_shown = false;
-    while (!mount_sd_card())
-    {
-        if (!sd_msg_shown)
-        {
-            c64_enable();
-            c64_send_message("Please insert a FAT formatted SD card");
-            sd_msg_shown = true;
-        }
-
-        delay_ms(1000);
-    }
-
-    if (!auto_boot())
-    {
-        c64_enable();
-        menu_loop();
-    }
-
-    if (dat_file.boot_type == DAT_CRT || dat_file.boot_type == DAT_DISK)
-    {
-        // Disable all interrupts besides the C64 bus handler beyond this point
-        // to ensure consistent response times
-        usb_disable();
-    }
-
-    if (!c64_set_mode())
-    {
-        c64_disable();
-        restart_to_menu();
-    }
-
-    if (dat_file.boot_type == DAT_DISK)
-    {
-        disk_loop();
-    }
-    else if (dat_file.boot_type == DAT_CRT &&
-             dat_file.crt.type == CRT_EASYFLASH)
-    {
-        eapi_loop();
-    }
-    else if (dat_file.boot_type == DAT_DIAG)
-    {
-        diag_loop();
-    }
-
-    dbg("In main loop...");
     while (true)
     {
-        // Forward data from USB to C64
-        if (usb_gotc() && ef3_can_putc())
-        {
-            ef3_putc(usb_getc());
-        }
 
-        // Forward data from C64 to USB
-        if (ef3_gotc() && usb_can_putc())
-        {
-            usb_putc(ef3_getc());
-        }
     }
 }

@@ -31,8 +31,6 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 main.c \
-fatfs/ff.c \
-fatfs/ffunicode.c
 
 # ASM sources
 ASM_SOURCES =  \
@@ -92,8 +90,6 @@ C_INCLUDES =  \
 -I.  \
 -Istm32f4xx  \
 -Istm32f4xx/cmsis  \
--Istm32f4xx/libusb_stm32  \
--Ifatfs \
 -Icartridges
 
 # compile gcc flags
@@ -121,7 +117,7 @@ LDFLAGS_COMMON = $(MCU) -specs=nano.specs $(LIBDIR) $(LIBS) -Wl,--gc-sections
 LDFLAGS = $(LDFLAGS_COMMON) -T$(LDSCRIPT) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref
 
 # default action: build all
-all: $(BUILD_DIR)/$(TARGET).upd
+all: $(BUILD_DIR)/$(TARGET)_all.bin
 
 #######################################
 # build the application
@@ -149,9 +145,8 @@ $(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf | $(BUILD_DIR)
 $(BUILD_DIR)/$(TARGET)_mem.bin: $(BUILD_DIR)/$(TARGET).bin | $(BUILD_DIR)
 	@cat $(BUILD_DIR)/$(TARGET).bin > $@
 
-$(BUILD_DIR)/$(TARGET).upd: $(BUILD_DIR)/$(TARGET).bin $(LAUNCHER) | $(BUILD_DIR)
+$(BUILD_DIR)/$(TARGET)_all.bin: $(BUILD_DIR)/$(TARGET).bin | $(BUILD_DIR)
 	@cat $(BUILD_DIR)/$(TARGET).bin > $@
-	@cat $(LAUNCHER) >> $@
 
 $(BUILD_DIR):
 	mkdir -p $@

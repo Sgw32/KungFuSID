@@ -20,6 +20,7 @@
 
 #define KFF_BUF (CRT_DAT_BANK(0))
 #define KFF_RAM (CRT_RAM_BUF)
+#define KFF_ID_VALUE 0x2a
 
 // $de01 Command register in KFF RAM
 #define KFF_COMMAND (*((volatile u8*)(KFF_RAM + 1)))
@@ -72,7 +73,7 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 {
     if ((control & (C64_ROML|C64_ROMH)) != (C64_ROML|C64_ROMH))
     {
-        C64_DATA_WRITE(crt_ptr[addr & 0x3fff]);
+        C64_DATA_WRITE(0x66);
         return true;
     }
 
@@ -82,13 +83,13 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
         {
             case 0x00:  // $de00 Data register
             {
-                C64_DATA_WRITE(KFF_BUF[KFF_READ_PTR++]);
+                C64_DATA_WRITE(0x77);
             }
             return true;
 
             default:    // RAM at rest of $de00-$deff
             {
-                C64_DATA_WRITE(KFF_RAM[addr & 0xff]);
+                C64_DATA_WRITE(0x88);
             }
             return true;
         }
@@ -138,10 +139,9 @@ FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
 
 static void kff_init(void)
 {
-    C64_CRT_CONTROL(STATUS_LED_ON|CRT_PORT_ULTIMAX);
+    C64_CRT_CONTROL(STATUS_LED_ON|CRT_PORT_8K);
 
     KFF_ID = KFF_ID_VALUE;
-    kff_set_command(CMD_NONE);
 }
 
 // Allow SDIO and USB to be used while handling C64 bus access.
