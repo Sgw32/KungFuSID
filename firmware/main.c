@@ -43,8 +43,8 @@ static void sid_clock_config()
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     __DSB();
     // No prescaler, timer runs at ABP2 timer clock speed (168 MHz)
-    TIM2->PSC = 64;
-    TIM2->ARR = 32;
+    TIM2->PSC = 41;
+    TIM2->ARR = 15;
     TIM2->EGR |= TIM_EGR_UG;
     // Enable TIM1_CC_IRQn, highest priority
     NVIC_SetPriority(TIM2_IRQn, 2);
@@ -62,7 +62,7 @@ void TIM2_IRQHandler(void) {
   SID_emulator();
   //DAC->DHR12R2 = main_volume;
   //timer_data+=1;
-  DAC->DHR12R2 = main_volume&4095; //((sin((float)timer_data*2.0f*PI/200.0f) + 1.0f)*(4096.0f/2.0f)); // формула взята из мануала на f4 серию
+  DAC->DHR12R2 = main_volume; //((sin((float)timer_data*2.0f*PI/200.0f) + 1.0f)*(4096.0f/2.0f)); // формула взята из мануала на f4 серию
 }
 
 int main(void)
@@ -70,15 +70,15 @@ int main(void)
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR |= DAC_CR_EN2; // Channel 2
     reset_SID();
-    OSC_1_HiLo = 0x0c00; // just having fun with globals here :-)
+    OSC_1_HiLo = 7493; // 440 Hz
     MASTER_VOLUME  = 0x0f;
-    ADSR_Attack_1  = 0x09;
-    ADSR_Decay_1  = 0x07;
-    ADSR_Sustain_1 = 0x00;
+    ADSR_Attack_1  = 0x00;
+    ADSR_Decay_1  = 0x00;
+    ADSR_Sustain_1 = 0x0f;
     ADSR_Release_1 = 0x0f;
     PW_HiLo_voice_1 = 0x400;
     //sawtooth_bit_voice_1=1;
-    triangle_bit_voice_1 = 1;
+    triangle_bit_voice_1 = 0;
     pulse_bit_voice_1 = 1;
     Gate_bit_1 = 1;       
     configure_system();
