@@ -1322,7 +1322,7 @@ void SID_emulator ()
     main_volume_32bit = (main_volume_32bit * 0x10); // 28bit
     main_volume_32bit = (main_volume_32bit) >> 7; // 28-12 = 16bit
     main_volume_32bit = (main_volume_32bit *  MASTER_VOLUME); //16+4 =20bit
-    main_volume_32bit = (main_volume_32bit) >> 8; // 28-12 = 16bit
+    main_volume_32bit = (main_volume_32bit) >> 9; // 28-12 = 16bit
     main_volume = main_volume_32bit + 1; // i forgot why i added this. Maybe for minimum value for CCR1?
 
     //if (WaveformDA_1>2048)
