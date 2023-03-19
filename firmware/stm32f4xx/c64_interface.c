@@ -379,4 +379,6 @@ static void c64_interface_config(void)
     c64_clock_config();
 
     button_config();
+
+    
 }

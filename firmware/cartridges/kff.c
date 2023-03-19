@@ -17,7 +17,7 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
+#include "sid.h"
 #define KFF_BUF (CRT_DAT_BANK(0))
 #define KFF_RAM (CRT_RAM_BUF)
 #define KFF_ID_VALUE 0x2a
@@ -34,67 +34,23 @@
 // $de09 ID register in KFF RAM (same address as EF3 USB Control register)
 #define KFF_ID (*((u8*)(KFF_RAM + 9)))
 
-static void kff_set_command(u8 cmd)
-{
-    KFF_READ_PTR = 0;
-    KFF_WRITE_PTR = 0;
 
-    COMPILER_BARRIER();
-    KFF_COMMAND = cmd;
-}
-
-static bool kff_get_reply(u8 cmd, u8 *reply)
-{
-    *reply = KFF_COMMAND;
-    if (cmd != *reply)
-    {
-        KFF_READ_PTR = 0;
-        KFF_WRITE_PTR = 0;
-        return true;
-    }
-
-    return false;
-}
-
-static u8 kff_receive_byte(void)
-{
-    return KFF_BUF[KFF_READ_PTR++];
-}
-
-static void kff_send_byte(u8 data)
-{
-    KFF_BUF[KFF_WRITE_PTR++] = data;
-}
+uint32_t data_buffer[255];
+uint32_t address_buffer[255];
+uint8_t	readIndex=0;
+uint8_t	writeIndex=0;
+uint8_t	bufferLength=0;
 
 /*************************************************
 * C64 bus read callback
 *************************************************/
 FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 {
-    if ((control & (C64_ROML|C64_ROMH)) != (C64_ROML|C64_ROMH))
+    if ((addr>=0xd400)&&(addr<=0xd41c))
     {
-        C64_DATA_WRITE(0x66);
+	C64_DATA_WRITE(SID[addr&0xFF]);
         return true;
     }
-
-    if (!(control & C64_IO1))
-    {
-        switch (addr & 0xff)
-        {
-            case 0x00:  // $de00 Data register
-            {
-                C64_DATA_WRITE(0x77);
-            }
-            return true;
-
-            default:    // RAM at rest of $de00-$deff
-            {
-                C64_DATA_WRITE(0x88);
-            }
-            return true;
-        }
-    }
-
     return false;
 }
 
@@ -103,44 +59,29 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 *************************************************/
 FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
 {
-    if (!(control & C64_IO1))
-    {
-        switch (addr & 0xff)
+        /*switch (addr)
         {
-            case 0x00:  // $de00 Data register
-            {
-                KFF_BUF[KFF_WRITE_PTR++] = (u8)data;
-            }
-            break;
-
-            case 0x02:  // $de02 Control register
-            {
-                u32 mode;
-                if (data & 0x01)
-                {
-                    mode = STATUS_LED_ON|CRT_PORT_16K;
-                }
-                else
-                {
-                    mode = STATUS_LED_OFF|CRT_PORT_NONE;
-                }
-                C64_CRT_CONTROL(mode);
-            }
-            break;
-
+            case 0xd400:
+                led_toggle();
+                break;
             default:    // RAM at rest of $de00-$deff
-            {
-                KFF_RAM[addr & 0xff] = (u8)data;
-            }
-            break;
-        }
-    }
+               break;                
+        } */
+	if ((addr>=0xd400)&&(addr<=0xd41c))
+	{
+            //led_toggle();
+            led_toggle();
+            setreg(addr ,data);
+            //address_buffer[writeIndex] = addr;
+	        //data_buffer[writeIndex]=data;
+	        //writeIndex++;
+	        //bufferLength++;
+	}
 }
 
 static void kff_init(void)
 {
-    C64_CRT_CONTROL(STATUS_LED_ON|CRT_PORT_8K);
-
+    C64_CRT_CONTROL(STATUS_LED_ON|CRT_PORT_NONE);
     KFF_ID = KFF_ID_VALUE;
 }
 

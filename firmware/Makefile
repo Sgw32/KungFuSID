@@ -140,7 +140,7 @@ $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
 	$(SZ) $@
 
 $(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf | $(BUILD_DIR)
-	$(BIN) --gap-fill 0xff --pad-to 0xc000 $< $@
+	$(BIN) $< $@
 
 $(BUILD_DIR)/$(TARGET)_mem.bin: $(BUILD_DIR)/$(TARGET).bin | $(BUILD_DIR)
 	@cat $(BUILD_DIR)/$(TARGET).bin > $@
