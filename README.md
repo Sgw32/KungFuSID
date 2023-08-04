@@ -1,5 +1,7 @@
 # Kung Fu SID GD32 version
 
+IMPORTANT! Firmware is adjusted for new Kung Fu SID hardware 
+
 A firmware for Kung Fu Flash and Kung Fu Flash GD32 which emulates SID via internal DAC of STM32F405RGT6
 Kung Fu SID is a future firmware for "UltiSID":
 
