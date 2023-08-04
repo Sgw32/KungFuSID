@@ -46,9 +46,9 @@ uint8_t	bufferLength=0;
 *************************************************/
 FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 {
-    if ((addr>=0xd400)&&(addr<=0xd41c))
+    if (!(addr&0b100000))
     {
-	C64_DATA_WRITE(SID[addr&0xFF]);
+	    C64_DATA_WRITE(SID[addr&0b100000]);
         return true;
     }
     return false;
@@ -67,11 +67,11 @@ FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
             default:    // RAM at rest of $de00-$deff
                break;                
         } */
-	if ((addr>=0xd400)&&(addr<=0xd41c))
+	if (!(addr&0b100000))
 	{
             //led_toggle();
             led_toggle();
-            setreg(addr ,data);
+            setreg(addr&0b11111,data);
             //address_buffer[writeIndex] = addr;
 	        //data_buffer[writeIndex]=data;
 	        //writeIndex++;

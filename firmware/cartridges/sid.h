@@ -46,7 +46,7 @@ uint8_t period = 2;//                        period for timer1, for frequency an
 //                                           Automatic config set this as 4, if calculated multiplier is greater then 12 (uS), otherwise, is same as multiplier.
 //                                           value of 1 represent number of cpu cycles in 1 uS. (cpu_speed * period) is PWM resolution .
 
-uint8_t multiplier  = 8;//                   ----   Can't autoconfig without any sid data loaded, this is just wild guess   --- maximum is 255 --- best when under 64 --- DO NOT set it to 0 ---
+uint8_t multiplier  = 16;//                   ----   Can't autoconfig without any sid data loaded, this is just wild guess   --- maximum is 255 --- best when under 64 --- DO NOT set it to 0 ---
 //                                           (byte) Interrupt speed in uS (in general, how much slower then real SID). Automatic config will search for value that has SID emulator run under 13mS per frame.
 //                                           needed for Timer2 (it also affect calculations in frequency multiplications per irq- it may affect tunes that uses Test-bit).
 //                                           Ideally, this should be 1 (to cycle-exact emulate SID), but irq will need to respond and exit in next 500nS
