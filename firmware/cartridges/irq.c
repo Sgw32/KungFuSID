@@ -204,16 +204,16 @@ void setreg(uint8_t addr,uint8_t value)
         //STAD4XX = 1;
 
         break;
-      case 25:
+      case 25: //paddle X
+        
+        break;
+      case 26: //paddle Y
 
         break;
-      case 26:
+      case 27: //OSC 3
 
         break;
-      case 27:
-
-        break;
-      case 28:
+      case 28: //ENV 3
 
         break;
       case 29:
