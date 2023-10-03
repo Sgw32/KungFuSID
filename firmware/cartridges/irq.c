@@ -2,7 +2,11 @@
 #include "irq.h"
 #include "sid.h"
 
-void error_open_folder (void) 
+/**
+ * @brief startup sound
+ * 
+ */
+void error_open_folder(void) 
 {
   reset_SID();
   OSC_1_HiLo = 0x2000; 
@@ -12,24 +16,26 @@ void error_open_folder (void)
   ADSR_Sustain_1 = 0x00;
   ADSR_Release_1 = 0x0b;
   PW_HiLo_voice_1 = 0x400;
-  //sawtooth_bit_voice_1=1;
   triangle_bit_voice_1 = 1;
   pulse_bit_voice_1 = 1;
   Gate_bit_1 = 1;
 }
 
+
+/**
+ * @brief Sets SID register
+ * 
+ * @param addr 
+ * @param value 
+ */
 void setreg(uint8_t addr,uint8_t value)
 {
-		//GPIOB->ODR |= (1<<1);
     uint8_t access_adress = addr;
-    SID[(access_adress)] = value; //  SID
+    SID[(access_adress)] = value;
 
-    // disable if IRQ is transfering SID[] variable
     switch (access_adress) {
       case 0:
         OSC_1_HiLo = ((SID[0] & 0xff) + ( (SID[1] & 0xff) << 8) ); // *0.985
-				GPIOB->ODR &= ~(1<<1);
-        // //Turn on GPIOB1 as a flag
         break;
       case 1:
         OSC_1_HiLo = ((SID[0] & 0xff) + ( (SID[1] & 0xff) << 8)); // *0.985
@@ -230,6 +236,11 @@ void setreg(uint8_t addr,uint8_t value)
     //PB13_HIGH;
 }
 
+/**
+ * @brief Resets SID state
+ * 
+ */
+
 void reset_SID()
 {
   // list of global variables that control SID emulator . Keep in mind that IRQ will detect change after some delay (around 50uS)
@@ -297,14 +308,12 @@ void reset_SID()
   MASTER_VOLUME         = 0;              // 0-15         //  
 }
 
+/**
+ * @brief Main emulator function which outputs to DAC
+ * 
+ */
 void SID_emulator ()
 {
-    //led_toggle();
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //Magic
-    ///////////////////////////////////
-
     OSC_MSB_Previous_1 = OSC_MSB_1;
     OSC_MSB_Previous_2 = OSC_MSB_2;
     OSC_MSB_Previous_3 = OSC_MSB_3;
@@ -592,16 +601,11 @@ void SID_emulator ()
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
     // gate change check
     //
     //  Gate_bit_voice_X variable: for now, main program can set it to any value , irq will reset it to 0
     //   0 - change from 1 to 0 * start Release stage
     //   1 - change from 0 to 1 * start Attack stage
-
-
-    //
-
 
     switch (Gate_bit_1) {
       case 0: // change from 1 to 0 * start Release stage
@@ -616,9 +620,6 @@ void SID_emulator ()
           //led_off();
           //
         }
-
-
-
         break;
       case 1: // change from 0 to 1 * start Attack/Decay stage
         if (Gate_previous_1 == 0) {
@@ -631,22 +632,12 @@ void SID_emulator ()
           hold_zero_1 = false;
           LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Attack_1];
         }
-
-
-
-
-        //
         break;
-
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
     // Increase LFSR15 counter for ADSR (scaled to match)
-
 
     //LFSR15_1 = LFSR15_1 & 0x7fff; // 15bit
     LFSR15_1 = LFSR15_1 + multiplier;;
@@ -658,9 +649,6 @@ void SID_emulator ()
       LFSR15_1 = LFSR15_1 - Divided_LFSR15_1 * LFSR15_comparator_value_1; // set to zero, plus how manu uS has passed since (LFSR15_1 == LFSR15_comparator_value_1 )
       // LFSR15_1 = 0;
       //  LFSR5_1 = LFSR5_1++;
-
-      //
-
       // LFSR5_1 = LFSR5_1 + 1;
       LFSR5_1 = LFSR5_1 + Divided_LFSR15_1 ; // increase LFSR5 counter and check how many (LFSR5_1 == LFSR5_comparator_value_1) was skipped
 
@@ -1325,35 +1313,14 @@ void SID_emulator ()
     main_volume_32bit = (main_volume_32bit) >> 9; // 28-12 = 16bit
     main_volume = main_volume_32bit + 1; // i forgot why i added this. Maybe for minimum value for CCR1?
 
-    //if (WaveformDA_1>2048)
-    /*if (main_volume>2048)
-	led_on();
-    else
-        led_off();
-    */
-    OSC3 =  (OSC_3 >> 16) & 0xff; //
-    /*
-      OSC3 =  (((OSC_3 & 0x400000) >> 11) | // OSC3 output for SID register
-               ((OSC_3 & 0x100000) >> 10) |
-               ((OSC_3 & 0x010000) >> 7) |
-               ((OSC_3 & 0x002000) >> 5) |
-               ((OSC_3 & 0x000800) >> 4) |
-               ((OSC_3 & 0x000080) >> 1) |
-               ((OSC_3 & 0x000010) << 1) |
-               ((OSC_3 & 0x000004) << 2) )&0xff;
-    */
-    //
+
     ENV3 = (ADSR_volume_3) & 0xff; ; // ((Volume_3 + 0x80000) >> 12) & 0xff; // value for REG_28
-    //
     SID[25] = POTX;
     SID[26] = POTY;
-    SID[27] = OSC3;
+    SID[27] = (WaveformDA_3 >> 4) & 0xff; //WaveformDA_3 - 12 bit
     SID[28] = ENV3;
-
-    //
 
     // btw, lot of "i hope" in this code... oh, well... :-)
 
-    STAD4XX = 0; // let main program know that his request has been served
-    //led_toggle();           
+    STAD4XX = 0; // let main program know that his request has been served           
 }

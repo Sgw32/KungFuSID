@@ -48,7 +48,7 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 {
     if (!(addr&0b100000))
     {
-	    C64_DATA_WRITE(SID[addr&0b100000]);
+	    C64_DATA_WRITE(SID[addr&0b11111]);
         return true;
     }
     return false;

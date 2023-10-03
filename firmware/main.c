@@ -33,10 +33,12 @@
 
 
 #define PI 3.14159259
-uint32_t sine_value[255];
-uint32_t timer_data = 0;
-//Timer2 Prescaler :2; Preload = 55999; Actual Interrupt Time = 1 ms
- 
+
+
+/**
+ * @brief Config DAC SID clock
+ * @details Timer2 Prescaler :2; Preload = 55999; Actual Interrupt Time = 1 ms
+ */
 static void sid_clock_config()
 {
      // Enable TIM1 clock
@@ -57,14 +59,21 @@ static void sid_clock_config()
     TIM2->CR1 |= TIM_CR1_CEN;
 }
 
+/**
+ * @brief SID DAC and emulation IRQ handler
+ * 
+ */
 void TIM2_IRQHandler(void) {
   TIM2->SR &= ~TIM_SR_UIF;
   SID_emulator();
-  //DAC->DHR12R2 = main_volume;
-  //timer_data+=1;
-  DAC->DHR12R2 = main_volume; //((sin((float)timer_data*2.0f*PI/200.0f) + 1.0f)*(4096.0f/2.0f)); // формула взята из мануала на f4 серию
+  DAC->DHR12R2 = main_volume;
 }
 
+/**
+ * @brief main
+ * 
+ * @return int 
+ */
 int main(void)
 {
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
@@ -77,13 +86,11 @@ int main(void)
     ADSR_Sustain_1 = 0x0f;
     ADSR_Release_1 = 0x0f;
     PW_HiLo_voice_1 = 0x400;
-    //sawtooth_bit_voice_1=1;
     triangle_bit_voice_1 = 0;
     pulse_bit_voice_1 = 1;
     Gate_bit_1 = 1;       
     configure_system();
     sid_clock_config();
-    //c64_launcher_mode();
     crt_ptr = CRT_LAUNCHER_BANK;
     kff_init();
     C64_INSTALL_HANDLER(kff_handler);
