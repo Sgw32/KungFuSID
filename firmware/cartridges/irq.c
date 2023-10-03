@@ -37,7 +37,6 @@ void setreg(uint8_t addr,uint8_t value)
         PW_HiLo_voice_1 = SID[2] + (( (SID[3] & 0x0f) << 8 ));
         break;
       case 4:
-        STAD4XX = 1;
         Gate_bit_1 = SID[4] & 1;   //
         break;
       case 5:
@@ -61,7 +60,6 @@ void setreg(uint8_t addr,uint8_t value)
         PW_HiLo_voice_2 = SID[9] + ( (SID[10] & 0x0f) << 8);
         break;
       case 11:
-        STAD4XX = 1;
         Gate_bit_2 = SID[11] & 1;   //
         break;
       case 12:
@@ -85,7 +83,6 @@ void setreg(uint8_t addr,uint8_t value)
         PW_HiLo_voice_3 = SID[16] + ( (SID[17] & 0x0f) << 8);
         break;
       case 18:
-        STAD4XX = 1;
         Gate_bit_3 = SID[18] & 1;
         break;
       case 19:
@@ -146,9 +143,6 @@ void setreg(uint8_t addr,uint8_t value)
       default:
         break;
     }
-
-    // STAD4XX = 1; // SID write signal for IRQ
-    //PB13_HIGH;
 }
 
 /**
@@ -1076,6 +1070,4 @@ void SID_emulator ()
     SID[28] = ENV3;
 
     // btw, lot of "i hope" in this code... oh, well... :-)
-
-    STAD4XX = 0; // let main program know that his request has been served           
 }

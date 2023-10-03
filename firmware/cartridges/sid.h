@@ -74,38 +74,6 @@ const uint8_t magic_number = F_CPU / 1000000 ; // PWM resolution - number of cyc
 // TODO: It's a 8bit number, so maximum clock is 255. TODO: See if it brake stuff if it's 16bit number.
 
 
-uint16_t MagicID = 0;
-bool RAM_OVERFLOW = 0;
-
-bool autoconfigFinished = false;
-
-uint16_t LOAD_ADDRESS = 0;
-volatile bool next_tune = false;
-
-uint16_t SID_load_start = 0; //SID_data[0x7c] + (SID_data[0x7d] * 256); // get start address from .sid file
-uint16_t SID_load_end = 0; //SID_start + SID_data_size - 0x7e ; // end address of music routine , not included "busy blocks", aka, ram needed after end of actual sid file. If sid is longer then available RAM, everything above available RAM will be read-only (from SID_data[] array)
-
-uint16_t SID_play = 0;//SID_data[13] + (SID_data[12] * 256); // sid play address
-uint16_t SID_init = 0;//SID_data[11] + (SID_data[10] * 256); // sid init address
-
-uint8_t SID_default_tune = 0;//SID_data[17] + (SID_data[16] * 256); // default song to be played first
-uint8_t SID_number_of_tunes = 0;//SID_data[15] + (SID_data[14] * 256); // number of tunes in sid
-uint8_t SID_current_tune = 0;//SID_default_tune;
-
-uint16_t SID_speed = 0;//20000; // value set in 2_setup.ino(in uS) see how to calculate this number from sid header
-
-uint32_t tune_play_counter; // uS counter
-uint32_t tune_play_next = 1000000 * TUNE_PLAY_TIME; // play new tune every x seconds  (this is the number in uS) (maximum 32bit number is around 71minutes)
-
-uint32_t VIC_irq = 0;
-volatile  uint8_t  VIC_irq_request = 0;
-volatile bool play_next_tune = 0;
-volatile  uint8_t JSR1003 = 0;
-volatile  uint8_t STAD4XX = 0;
-
-uint8_t skip_counter;
-uint8_t skip_counter_max = 197; //every 197th jumps into irq will be skiped, to emulate 985000Hz clock (not 1MHz )
-
 int32_t w0 = 0;
 //w0 = static_cast<sound_sample>(2*pi*f0[fc]*1.048576); // f0[fc] 0-12500 ; fc 0-7ff
 // w0 = 2*pi*1.048576*(fc*12500/2047)
@@ -221,14 +189,6 @@ static uint8_t SID[] = {                  //  array that hold values of SID regi
 
 uint16_t FILTER_HiLo = 0; // 11bit
 uint8_t FILTER_Resonance = 0; // 4bit
-uint8_t FILTER_Enable_1 = 0; // on/off
-uint8_t FILTER_Enable_2 = 0; // on/off
-uint8_t FILTER_Enable_3 = 0; // on/off
-uint8_t FILTER_Enable_switch = 0; // Filter_Enable_123 in one variable
-uint8_t FILTER_LP = 0; // on/off
-uint8_t FILTER_HP = 0; // on/off
-uint8_t FILTER_BP = 0; // on/off
-uint8_t FILTER_Enable_EXT = 0; // on/off
 
 
 uint8_t OSC3 = 0; // Register 27 - Oscilator output
@@ -306,7 +266,7 @@ uint32_t temp12;
 uint32_t temp13;
 
 // internal SID registers
-
+uint8_t FILTER_Enable_switch = 0;
 // ADSR
 
 // values for attack and decay/release
