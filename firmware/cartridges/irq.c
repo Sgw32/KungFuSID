@@ -422,15 +422,17 @@ void SID_emulator ()
 
     switch (Gate_bit_1) {
       case 0: // change from 1 to 0 * start Release stage
+        LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Release_1];
         if (Gate_previous_1 == 1) {
           ADSR_stage_1 = 4;// Set Release
           LFSR15_1 = 0; // preventing ADSR bugs
           LFSR5_1 = 0; // preventing ADSR bugs
-          LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Release_1];
+          
           Gate_previous_1 = 0; // set to 0
         }
         break;
       case 1: // change from 0 to 1 * start Attack/Decay stage
+        LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Attack_1];
         if (Gate_previous_1 == 0) {
 
           ADSR_stage_1 = 1; //
@@ -439,7 +441,7 @@ void SID_emulator ()
           Gate_previous_1 = 1; // set to 1
           // Switching to attack state unlocks the zero freeze.
           hold_zero_1 = false;
-          LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Attack_1];
+          
         }
         break;
     }
@@ -740,7 +742,7 @@ void SID_emulator ()
     //    2 - no change
 
     //
-
+    
 
     switch (Gate_bit_3) {
       case 0: // change from 1 to 0 * start Release stage

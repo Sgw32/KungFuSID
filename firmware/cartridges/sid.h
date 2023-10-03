@@ -46,7 +46,7 @@ uint8_t period = 2;//                        period for timer1, for frequency an
 //                                           Automatic config set this as 4, if calculated multiplier is greater then 12 (uS), otherwise, is same as multiplier.
 //                                           value of 1 represent number of cpu cycles in 1 uS. (cpu_speed * period) is PWM resolution .
 
-uint8_t multiplier  = 16;//                   ----   Can't autoconfig without any sid data loaded, this is just wild guess   --- maximum is 255 --- best when under 64 --- DO NOT set it to 0 ---
+uint8_t multiplier  = 12;//                   ----   Can't autoconfig without any sid data loaded, this is just wild guess   --- maximum is 255 --- best when under 64 --- DO NOT set it to 0 ---
 //                                           (byte) Interrupt speed in uS (in general, how much slower then real SID). Automatic config will search for value that has SID emulator run under 13mS per frame.
 //                                           needed for Timer2 (it also affect calculations in frequency multiplications per irq- it may affect tunes that uses Test-bit).
 //                                           Ideally, this should be 1 (to cycle-exact emulate SID), but irq will need to respond and exit in next 500nS
@@ -61,18 +61,11 @@ uint8_t multiplier  = 16;//                   ----   Can't autoconfig without an
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-#define TUNE_PLAY_TIME 360                // Can't implement songlenghts, manual values are needed (in seconds)//  TODO: try to determine silence in output, and skip to next tune
-uint8_t DEFAULT_SONG = 0;                 // 0 is automatic, from sid header, any other value is tune number
-
-
 const uint8_t magic_number = F_CPU / 1000000 ; // PWM resolution - number of cycles in 1 uS (PWM resolution = period * magic_number) // keep as same as speed of microcontroller, in Mhz
 // at 72MHz there is 72 clock "ticks" in 1uS that drives counter of Timer1. It works with 128MHZ bluepill overclocked. It also works underclocked at 48MHz. 
 // STM32duino boards have this as CYCLES_PER_MICROSECOND
 // STM32 boards have this as (F_CPU / 1000000)
 // TODO: It's a 8bit number, so maximum clock is 255. TODO: See if it brake stuff if it's 16bit number.
-
 
 int32_t w0 = 0;
 //w0 = static_cast<sound_sample>(2*pi*f0[fc]*1.048576); // f0[fc] 0-12500 ; fc 0-7ff
