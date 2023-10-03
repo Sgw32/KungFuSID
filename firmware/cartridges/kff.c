@@ -59,23 +59,10 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 *************************************************/
 FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
 {
-        /*switch (addr)
-        {
-            case 0xd400:
-                led_toggle();
-                break;
-            default:    // RAM at rest of $de00-$deff
-               break;                
-        } */
 	if (!(addr&0b100000))
 	{
-            //led_toggle();
             led_toggle();
             setreg(addr&0b11111,data);
-            //address_buffer[writeIndex] = addr;
-	        //data_buffer[writeIndex]=data;
-	        //writeIndex++;
-	        //bufferLength++;
 	}
 }
 
