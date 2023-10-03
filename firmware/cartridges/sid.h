@@ -244,20 +244,6 @@ uint8_t POTX = 0; // TODO
 uint8_t POTY = 0; // TODO
 
 
-
-uint8_t SYNC_bit_voice_1 = 0;
-uint8_t SYNC_bit_voice_2 = 0;
-uint8_t SYNC_bit_voice_3 = 0;
-
-uint8_t  test_bit_voice_1 = 0;
-uint8_t  test_bit_voice_2 = 0;
-uint8_t  test_bit_voice_3 = 0;
-
-uint8_t ring_bit_voice_1 = 0;
-uint8_t ring_bit_voice_2 = 0;
-uint8_t ring_bit_voice_3 = 0;
-
-
 uint16_t main_volume = 0;
 uint32_t main_volume_32bit = 0;
 
@@ -477,22 +463,8 @@ uint32_t bit17_3 = 0;
 uint8_t bit_0_3 = 0;
 
 // initial setup for SID registers - can be used for testing or for sketch with only interrupt (with just SID emulator, and direct change registers)
-uint16_t sawtooth_bit_voice_1 = 0;
-uint16_t triangle_bit_voice_1 = 0;
-uint16_t pulse_bit_voice_1 = 0;
-uint16_t noise_bit_voice_1 = 0;
 uint16_t PW_HiLo_voice_1 = 2048;  // 2048 = 50% initial test
-
-uint16_t sawtooth_bit_voice_2 = 0;
-uint16_t triangle_bit_voice_2 = 0;
-uint16_t pulse_bit_voice_2 = 0;
-uint16_t noise_bit_voice_2 = 0;
 uint16_t PW_HiLo_voice_2 = 2048;  // 2048 = 50% initial test
-
-uint16_t sawtooth_bit_voice_3 = 0;
-uint16_t triangle_bit_voice_3 = 0;
-uint16_t pulse_bit_voice_3 = 0;
-uint16_t noise_bit_voice_3 = 0;
 uint16_t PW_HiLo_voice_3 = 2048;  // 2048 = 50% initial test
 
 

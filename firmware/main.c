@@ -78,17 +78,7 @@ int main(void)
 {
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR |= DAC_CR_EN2; // Channel 2
-    reset_SID();
-    OSC_1_HiLo = 7493; // 440 Hz
-    MASTER_VOLUME  = 0x0f;
-    ADSR_Attack_1  = 0x00;
-    ADSR_Decay_1  = 0x00;
-    ADSR_Sustain_1 = 0x0f;
-    ADSR_Release_1 = 0x0f;
-    PW_HiLo_voice_1 = 0x400;
-    triangle_bit_voice_1 = 0;
-    pulse_bit_voice_1 = 1;
-    Gate_bit_1 = 1;       
+    reset_SID();      
     configure_system();
     sid_clock_config();
     crt_ptr = CRT_LAUNCHER_BANK;
