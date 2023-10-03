@@ -252,9 +252,9 @@ void SID_emulator ()
     if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
 
     //Triangle and ringmod
-    if ( (SID[4]&0b10100)) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
-    if ( (SID[11]&0b10100)) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
-    if ( (SID[18]&0b10100)) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
+    if ( (SID[4]&0b10100)==0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
+    if ( (SID[11]&0b10100)==0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
+    if ( (SID[18]&0b10100)==0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
 
     waveform_switch_1 = SID[4]&0xF0;
     waveform_switch_2 = SID[11]&0xF0;
