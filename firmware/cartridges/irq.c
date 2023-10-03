@@ -586,12 +586,12 @@ void SID_emulator ()
 
     switch (Gate_bit_2) {
       case 0: // change from 1 to 0 * start Release stage
-
+        LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Release_2];
         if (Gate_previous_2 == 1) {
           ADSR_stage_2 = 4;// Set Release
           LFSR15_2 = 0;
           LFSR5_2 = 0;
-          LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Release_2];
+          
           Gate_previous_2 = 0; // set to 0
 
 
@@ -601,6 +601,7 @@ void SID_emulator ()
 
         break;
       case 1: // change from 0 to 1 * start Attack/Decay stage
+      LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Attack_2];
         if (Gate_previous_2 == 0) {
           ADSR_stage_2 = 1; //
           LFSR15_2 = 0;
@@ -608,7 +609,7 @@ void SID_emulator ()
           Gate_previous_2 = 1; // set to 1
           // Switching to attack state unlocks the zero freeze.
           hold_zero_2 = false;
-          LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Attack_2];
+          
         }
 
 
@@ -623,7 +624,7 @@ void SID_emulator ()
 
 
 
-    LFSR15_2 = LFSR15_2 + multiplier;;
+    LFSR15_2 = LFSR15_2 + multiplier;
     // LFSR15_2 = LFSR15_2 & 0x7fff; // 15bit
 
 
@@ -746,12 +747,12 @@ void SID_emulator ()
 
     switch (Gate_bit_3) {
       case 0: // change from 1 to 0 * start Release stage
-
+        LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Release_3];
         if (Gate_previous_3 == 1) {
           ADSR_stage_3 = 4;// Set Release
           LFSR15_3 = 0;
           LFSR5_3 = 0;
-          LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Release_3];
+          
           Gate_previous_3 = 0; // set to 0
 
         }
@@ -760,6 +761,7 @@ void SID_emulator ()
 
         break;
       case 1: // change from 0 to 1 * start Attack/Decay stage
+        LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Attack_3];
         if (Gate_previous_3 == 0) {
           ADSR_stage_3 = 1; //
           LFSR15_3 = 0;
@@ -767,7 +769,7 @@ void SID_emulator ()
           Gate_previous_3 = 1; // set to 1
           // Switching to attack state unlocks the zero freeze.
           hold_zero_3 = false;
-          LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Attack_3];
+          
         }
 
 
