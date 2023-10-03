@@ -133,55 +133,17 @@ void setreg(uint8_t addr,uint8_t value)
 
         break;
       case 23:
-
         FILTER_Resonance = ( (SID[23] >> 4 ) & 0x0f) ;; // 4bit // TODO
-        FILTER_Enable_1 =  SID[23]  & 1 ; // on/off
-        FILTER_Enable_2 = ( (SID[23] >> 1 ) & 1) ;; // on/off
-        FILTER_Enable_3 = ( (SID[23] >> 2 ) & 1) ;; // on/off
-        FILTER_Enable_EXT = ( (SID[23] >> 3 ) & 1) ;; // on/off
-
-        FILTER_Enable_switch =  SID[23]  & 0x07 ; // for filter switch in irq (no external input filter)
-
+        
         // The coefficient 1024 is dispensed of later by right-shifting 10 times
         // (2 ^ 10 = 1024).
         // _1024_div_Q = static_cast<sound_sample>(1024.0/(0.707 + 1.0*res/0x0f));
         Q_1024_div = (1024.0 / (0.707 + 1.0 * (FILTER_Resonance) / 15.0));
-
         break;
       case 24:
-
-        //STAD4XX = 1; // SID write signal for IRQ
         OFF3 =  ( (SID[24] >> 7 ) & 1) ;; // on/off; //
-        FILTER_HP =  ( (SID[24] >> 6 ) & 1) ;; // on/off; //;
-        FILTER_BP =  ( (SID[24] >> 5 ) & 1) ;; // on/off; //;
-        FILTER_LP =  ( (SID[24] >> 4 ) & 1) ;; // on/off; //;
-        MASTER_VOLUME =   (SID[24]  & 15) ;; // on/off; //;
-        // change volume immidiattelly
-        //main_volume = MASTER_VOLUME * ( main_volume_32bit) / 15;
-        //TIMER1_BASE->CCR1 =  main_volume;
-        // disable if there is there is no delay hack
-        //STAD4XX = 1;
-
         break;
-      case 25: //paddle X
-        
-        break;
-      case 26: //paddle Y
-
-        break;
-      case 27: //OSC 3
-
-        break;
-      case 28: //ENV 3
-
-        break;
-      case 29:
-
-        break;
-      case 30:
-
-        break;
-      case 31:
+      default:
         break;
     }
 
@@ -230,15 +192,7 @@ void reset_SID()
   // other registers
   FILTER_HiLo           = 0;              // 0-2047       // 
   FILTER_Resonance      = 0;              // 0-15         // 
-  FILTER_Enable_1       = 0;              // true/false   // 
-  FILTER_Enable_2       = 0;              // true/false   // 
-  FILTER_Enable_3       = 0;              // true/false   // 
   OFF3                  = 0;              // true/false   // 
-  FILTER_HP             = 0;              // true/false   // 
-  FILTER_BP             = 0;              // true/false   // 
-  FILTER_LP             = 0;              // true/false   // 
-  MASTER_VOLUME         = 0;              // 0-15         //  
-
   memset(SID, 0, sizeof(SID));
 }
 
@@ -252,10 +206,9 @@ void SID_emulator ()
     OSC_MSB_Previous_2 = OSC_MSB_2;
     OSC_MSB_Previous_3 = OSC_MSB_3;
 
-    OSC_1 = ((SID[4] >> 3 ) & 1) * ((OSC_1 + (  multiplier * OSC_1_HiLo)) ) & 0xffffff;
-    OSC_2 = ((SID[11] >> 3 ) & 1) * ((OSC_2 + (  multiplier * OSC_2_HiLo)) ) & 0xffffff;
-    OSC_3 = ((SID[18] >> 3 ) & 1) * ((OSC_3 + (  multiplier * OSC_3_HiLo)) ) & 0xffffff;
-
+    OSC_1 = (~(SID[4] >> 3 ) & 1) * ((OSC_1 + (  multiplier * OSC_1_HiLo)) ) & 0xffffff;
+    OSC_2 = (~(SID[11] >> 3 ) & 1) * ((OSC_2 + (  multiplier * OSC_2_HiLo)) ) & 0xffffff;
+    OSC_3 = (~(SID[18] >> 3 ) & 1) * ((OSC_3 + (  multiplier * OSC_3_HiLo)) ) & 0xffffff;
 
     // noise_1
     OSC_noise_1 = OSC_noise_1 + multiplier * OSC_1_HiLo; // noise counter (
@@ -263,7 +216,6 @@ void SID_emulator ()
     for (i = 0; i < OSC_bit19_1; i++) {
       bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
       pseudorandom_1 = pseudorandom_1 << 1;
-      //pseudorandom_1 = pseudorandom_1 & 0x7fffff;
       pseudorandom_1 = bit_0_1 | pseudorandom_1;
     }
     OSC_noise_1 = OSC_noise_1 - (OSC_bit19_1 << 19); // * 0x080000); // no reset, keep lower 18bit
@@ -275,7 +227,6 @@ void SID_emulator ()
     for (i = 0; i < OSC_bit19_2; i++) {
       bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
       pseudorandom_2 = pseudorandom_2 << 1;
-      //pseudorandom_2 = pseudorandom_2 & 0x7fffff;
       pseudorandom_2 = bit_0_2 | pseudorandom_2;
     }
     OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
@@ -286,7 +237,6 @@ void SID_emulator ()
     for (i = 0; i < OSC_bit19_3; i++) {
       bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
       pseudorandom_3 = pseudorandom_3 << 1;
-      //pseudorandom_3 = pseudorandom_3 & 0x7fffff;
       pseudorandom_3 = bit_0_3 | pseudorandom_3;
     }
     OSC_noise_3 = OSC_noise_3 - (OSC_bit19_3 << 19 ); //  * 0x080000); // no reset, keep lower 18bit
@@ -364,13 +314,7 @@ void SID_emulator ()
         break;
 
     }
-
-
     // end of voice 1
-
-    //
-
-
     // voice 2
 
     temp12 = (OSC_2 >> 12); // upper 12 bit of OSC_2 calculate once now
@@ -421,9 +365,6 @@ void SID_emulator ()
         break;
 
     }
-
-
-
     // end of voice 2
 
 
@@ -475,8 +416,6 @@ void SID_emulator ()
         break;
 
     }
-
-
     // end of voice 3
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -960,54 +899,12 @@ void SID_emulator ()
 
     //
 
-
-
-
-    //
-    //   FILTERS:
-    // Unfortunatelly, i had no idea how filters works, so i just mess with reSID code untill it works out. Far from perfect, but it's good enough...
-
-
-#ifndef USE_FILTERS // If not using filters for Bluepill's output, invert WaveformDA in case of HP and LP (BP is not inverted)
-    // must be done while values are still positive
-    if (FILTER_Enable_1) {
-      if (FILTER_LP) {
-        WaveformDA_1 = 0xfff - WaveformDA_1  ; // MDAC (12bit) inverted
-      }
-      if (FILTER_HP) {
-        WaveformDA_1 = 0xfff - WaveformDA_1 ;
-      }
-    }
-    if (FILTER_Enable_2) {
-      if (FILTER_LP) {
-        WaveformDA_2 = 0xfff - WaveformDA_2 ; // MDAC (12bit) inverted
-      }
-      if (FILTER_HP) {
-        WaveformDA_2 = 0xfff - WaveformDA_2 ; // MDAC (12bit) inverted
-      }
-    }
-    if (FILTER_Enable_3) {
-      if (FILTER_LP) {
-        WaveformDA_3 = 0xfff - WaveformDA_3 ;  // MDAC (12bit) inverted
-      }
-      if (FILTER_HP) {
-        WaveformDA_3 = 0xfff - WaveformDA_3 ;  // MDAC (12bit) inverted
-      }
-    }
-
-
-#endif
-
-
-
     // finished calculations, time to set main volume
 
     // WaveformDA : 12bit     ( 0 -> 0x0fff  )
     // ADSR_volume : 8bit     ( 0 -> 0x00ff  )
     // Volume_x = 20bit       ( 0 -> 0xfffff )
-
     //
-
 
     // set WaveformDA of undefined channel to 0
 #ifndef USE_CHANNEL_1
@@ -1038,11 +935,7 @@ void SID_emulator ()
     ///////////////////////////////////////////////
     /////////////////////////////////////////////////// FILTERS redirect to filtered or unfiltered output
 
-
-
-    FILTER_Enable_switch =  ( ( FILTER_Enable_1   & 1 ) | ( (FILTER_Enable_2 & 1)  << 1 ) |  (  (FILTER_Enable_3 & 1)  << 2 ) );
-
-
+    FILTER_Enable_switch =  SID[23]&0xF;
 
     switch (FILTER_Enable_switch) {
       default:
@@ -1105,17 +998,11 @@ void SID_emulator ()
         Volume_filtered = Volume_1 + Volume_2 + Volume_3;
         Volume_unfiltered = 0;
         break;
-
     }
-
-
     Volume_filter_input = Volume_filtered;
     Volume_filter_output = Volume_filtered; // in case filters are skipped
 
-
 #ifdef USE_FILTERS
-    //
-
     Volume_filter_input = (int32_t)(Volume_filter_input) >> 7; // lower it to 13bit
 
     // w0 and Q is calculated emulator's address decoder (to save few uS here)
@@ -1153,16 +1040,10 @@ void SID_emulator ()
     }
 
     Volume_filter_output = 0;
-    if (FILTER_LP) {
-      Volume_filter_output = Volume_filter_output + Vlp;
-    }
-    if (FILTER_HP) {
-      Volume_filter_output = Volume_filter_output + Vhp;
-    }
-    if (FILTER_BP) {
-      Volume_filter_output = Volume_filter_output + Vbp;
-    }
-    //
+
+    Volume_filter_output = ((SID[24]&0b10000) ? Vlp : 0) + 
+                          ((SID[24]&0b100000) ? Vbp : 0) + 
+                          ((SID[24]&0b1000000) ? Vhp : 0);
 
     Volume_filter_output = ((int32_t)(Volume_filter_output) << 7); // back to 20 bit
 
@@ -1171,7 +1052,6 @@ void SID_emulator ()
     // magic_number - 8bit
     // period       - 8bit
     // Volume       - 20bit
-    // MASTER_VOLUME- 4bit
 
     // time to get positive about it
 
@@ -1181,11 +1061,10 @@ void SID_emulator ()
     if (Volume < 0) Volume = 0;
     if (Volume > 0xfffff) Volume = 0xfffff; // remove clipping (resonance sensitivity), just in case..
 
-    // main_volume_32bit = ( magic_number * period * ((Volume)&0xfffff) * MASTER_VOLUME) >> 24; // This could be as large as unsigned 40bit number before shifting, break it down into smaller steps to keep it inside 32bit number bounderies
     main_volume_32bit = (Volume) ; //& 0xfffff ; // 20bit
     main_volume_32bit = (main_volume_32bit * 0x10); // 28bit
     main_volume_32bit = (main_volume_32bit) >> 7; // 28-12 = 16bit
-    main_volume_32bit = (main_volume_32bit *  MASTER_VOLUME); //16+4 =20bit
+    main_volume_32bit = (main_volume_32bit *  (SID[24]&0x0F)); //16+4 =20bit MASTER_VOLUME
     main_volume_32bit = (main_volume_32bit) >> 9; // 28-12 = 16bit
     main_volume = main_volume_32bit + 1; // i forgot why i added this. Maybe for minimum value for CCR1?
 

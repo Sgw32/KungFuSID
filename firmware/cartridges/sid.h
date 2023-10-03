@@ -219,11 +219,6 @@ static uint8_t SID[] = {                  //  array that hold values of SID regi
 
 // BlueSID
 
-
-
-uint8_t MASTER_VOLUME = 15; // $D418 //
-
-
 uint16_t FILTER_HiLo = 0; // 11bit
 uint8_t FILTER_Resonance = 0; // 4bit
 uint8_t FILTER_Enable_1 = 0; // on/off
