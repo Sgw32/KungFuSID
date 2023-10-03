@@ -45,7 +45,7 @@ static void sid_clock_config()
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     __DSB();
     // No prescaler, timer runs at ABP2 timer clock speed (168 MHz)
-    TIM2->PSC = 84;
+    TIM2->PSC = 168/period;
     TIM2->ARR = multiplier-1;
     TIM2->EGR |= TIM_EGR_UG;
     // Enable TIM1_CC_IRQn, highest priority
