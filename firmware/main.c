@@ -29,6 +29,7 @@
 #include "file_types.h"
 #include "usid.c"
 #include "cartridge.c"
+#include "envelope.c"
 #include "math.h"
 
 
@@ -44,7 +45,7 @@ static void sid_clock_config()
      // Enable TIM1 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     __DSB();
-    // No prescaler, timer runs at ABP2 timer clock speed (168 MHz)
+    // period = 2 , clock = 2 MHz, 
     TIM2->PSC = 168/period;
     TIM2->ARR = multiplier-1;
     TIM2->EGR |= TIM_EGR_UG;
