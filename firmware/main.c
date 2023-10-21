@@ -29,7 +29,6 @@
 #include "file_types.h"
 #include "usid.c"
 #include "cartridge.c"
-#include "envelope.c"
 #include "math.h"
 
 

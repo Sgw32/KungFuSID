@@ -19,7 +19,7 @@
 
 #define __ENVELOPE_CC__
 #include "envelope.h"
-
+#include "common.h"
 
 // Rate counter periods are calculated from the Envelope Rates table in
 // the Programmer's Reference Guide. The rate counter period is the number of
@@ -170,7 +170,7 @@ void EnvelopeGenerator_reset(struct EnvelopeGenerator* gen)
 // ----------------------------------------------------------------------------
 // Register functions.
 // ----------------------------------------------------------------------------
-void EnvelopeGenerator_writeCONTROL_REG(struct EnvelopeGenerator* gen, reg8 control)
+FORCE_INLINE void EnvelopeGenerator_writeCONTROL_REG(struct EnvelopeGenerator* gen, reg8 control)
 {
   reg8 gate_next = control & 0x01;
 
@@ -194,7 +194,7 @@ void EnvelopeGenerator_writeCONTROL_REG(struct EnvelopeGenerator* gen, reg8 cont
   gen->gate = gate_next;
 }
 
-void EnvelopeGenerator_writeATTACK_DECAY(struct EnvelopeGenerator* gen, reg8 attack_decay)
+FORCE_INLINE void EnvelopeGenerator_writeATTACK_DECAY(struct EnvelopeGenerator* gen, reg8 attack_decay)
 {
   gen->attack = (attack_decay >> 4) & 0x0f;
   gen->decay = attack_decay & 0x0f;
@@ -206,7 +206,7 @@ void EnvelopeGenerator_writeATTACK_DECAY(struct EnvelopeGenerator* gen, reg8 att
   }
 }
 
-void EnvelopeGenerator_writeSUSTAIN_RELEASE(struct EnvelopeGenerator* gen, reg8 sustain_release)
+FORCE_INLINE void EnvelopeGenerator_writeSUSTAIN_RELEASE(struct EnvelopeGenerator* gen, reg8 sustain_release)
 {
   gen->sustain = (sustain_release >> 4) & 0x0f;
   gen->release = sustain_release & 0x0f;
@@ -332,7 +332,7 @@ void EnvelopeGenerator_clock(struct EnvelopeGenerator* gen)
 // SID clocking - delta_t cycles.
 // ----------------------------------------------------------------------------
 RESID_INLINE
-void EnvelopeGenerator__clock(struct EnvelopeGenerator* gen, cycle_count delta_t)
+void EnvelopeGenerator_clock_dt(struct EnvelopeGenerator* gen, cycle_count delta_t)
 {
   // Check for ADSR delay bug.
   // If the rate counter comparison value is set below the current value of the
@@ -443,7 +443,7 @@ void EnvelopeGenerator__clock(struct EnvelopeGenerator* gen, cycle_count delta_t
 // Read the envelope generator output.
 // ----------------------------------------------------------------------------
 RESID_INLINE
-reg8 EnvelopeGenerator__output(struct EnvelopeGenerator* gen)
+reg8 EnvelopeGenerator_output(struct EnvelopeGenerator* gen)
 {
   return gen->envelope_counter;
 }

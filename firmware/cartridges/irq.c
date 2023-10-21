@@ -1,6 +1,11 @@
 #include "setup.h"
 #include "irq.h"
 #include "sid.h"
+#include "envelope.c"
+
+static struct EnvelopeGenerator gen1;
+static struct EnvelopeGenerator gen2;
+static struct EnvelopeGenerator gen3;
 
 /**
  * @brief startup sound
@@ -37,15 +42,13 @@ void setreg(uint8_t addr,uint8_t value)
         PW_HiLo_voice_1 = SID[2] + (( (SID[3] & 0x0f) << 8 ));
         break;
       case 4:
-        Gate_bit_1 = SID[4] & 1;   //
+        EnvelopeGenerator_writeCONTROL_REG(&gen1,SID[4]);
         break;
       case 5:
-        ADSR_Attack_1 = ( (SID[5] >> 4 ) & 0x0f) ;
-        ADSR_Decay_1 = ( (SID[5]  ) & 0x0f) ;
+        EnvelopeGenerator_writeATTACK_DECAY(&gen1,SID[5]);
         break;
       case 6:
-        ADSR_Sustain_1 = ( (SID[6] >> 4 ) & 0x0f) ;
-        ADSR_Release_1 = ( (SID[6]  ) & 0x0f);
+        EnvelopeGenerator_writeSUSTAIN_RELEASE(&gen1,SID[6]);
         break;
       case 7:
         OSC_2_HiLo = (SID[7] + ( SID[8] << 8));
@@ -60,15 +63,13 @@ void setreg(uint8_t addr,uint8_t value)
         PW_HiLo_voice_2 = SID[9] + ( (SID[10] & 0x0f) << 8);
         break;
       case 11:
-        Gate_bit_2 = SID[11] & 1;   //
+        EnvelopeGenerator_writeCONTROL_REG(&gen2,SID[11]);
         break;
       case 12:
-        ADSR_Attack_2 = ( (SID[12] >> 4 ) & 0x0f) ;
-        ADSR_Decay_2 = ( (SID[12]  ) & 0x0f) ;
+        EnvelopeGenerator_writeATTACK_DECAY(&gen2,SID[12]);
         break;
       case 13:
-        ADSR_Sustain_2 = ( (SID[13] >> 4 ) & 0x0f) ;
-        ADSR_Release_2 = ( (SID[13]  ) & 0x0f);
+        EnvelopeGenerator_writeSUSTAIN_RELEASE(&gen2,SID[13]);
         break;
       case 14:
         OSC_3_HiLo = (SID[14] + ( SID[15] << 8));
@@ -83,15 +84,13 @@ void setreg(uint8_t addr,uint8_t value)
         PW_HiLo_voice_3 = SID[16] + ( (SID[17] & 0x0f) << 8);
         break;
       case 18:
-        Gate_bit_3 = SID[18] & 1;
+        EnvelopeGenerator_writeCONTROL_REG(&gen3,SID[18]);
         break;
       case 19:
-        ADSR_Attack_3 = ( (SID[19] >> 4 ) & 0x0f) ;
-        ADSR_Decay_3 = ( (SID[19]  ) & 0x0f) ;
+        EnvelopeGenerator_writeATTACK_DECAY(&gen3,SID[19]);
         break;
       case 20:
-        ADSR_Sustain_3 = ( (SID[20] >> 4 ) & 0x0f) ;
-        ADSR_Release_3 = ( (SID[20]  ) & 0x0f);
+        EnvelopeGenerator_writeSUSTAIN_RELEASE(&gen3,SID[20]);
         break;
       case 21:
         FILTER_HiLo = (SID[21] & 0x07) + ( SID[22] << 3); // 11bit // TODO
@@ -158,43 +157,29 @@ void reset_SID()
   // channel 1
   OSC_1_HiLo            = 0;              // 0-65535      // 
   PW_HiLo_voice_1       = 0;              // 0-4095       // 
-  Gate_bit_1            = 0;              // true/false   // 
-  ADSR_Attack_1         = 0;              // 0-15         // 
-  ADSR_Decay_1          = 0;              // 0-15         // 
-  ADSR_Sustain_1        = 0;              // 0-15         // 
-  ADSR_Release_1        = 0;              // 0-15         // 
-
   // channel 2
 
   OSC_2_HiLo            = 0;              // 0-65535      // 
   PW_HiLo_voice_2       = 0;              // 0-4095       // 
-  Gate_bit_2            = 0;              // true/false   // 
-  ADSR_Attack_2         = 0;              // 0-15         // 
-  ADSR_Decay_2          = 0;              // 0-15         // 
-  ADSR_Sustain_2        = 0;              // 0-15         // 
-  ADSR_Release_2        = 0;              // 0-15         // 
-
   // channel 3
   OSC_3_HiLo            = 0;              // 0-65535      // 
   PW_HiLo_voice_3       = 0;              // 0-4095       // 
-  Gate_bit_3            = 0;              // true/false   // 
-  ADSR_Attack_3         = 0;              // 0-15         // 
-  ADSR_Decay_3          = 0;              // 0-15         // 
-  ADSR_Sustain_3        = 0;              // 0-15         // 
-  ADSR_Release_3        = 0;              // 0-15         // 
 
   // other registers
   FILTER_HiLo           = 0;              // 0-2047       // 
   FILTER_Resonance      = 0;              // 0-15         // 
   OFF3                  = 0;              // true/false   // 
   memset(SID, 0, sizeof(SID));
+  EnvelopeGenerator_reset(&gen1);
+  EnvelopeGenerator_reset(&gen2);
+  EnvelopeGenerator_reset(&gen3);
 }
 
 /**
  * @brief Main emulator function which outputs to DAC
  * 
  */
-void SID_emulator ()
+FORCE_INLINE void SID_emulator ()
 {
     OSC_MSB_Previous_1 = OSC_MSB_1;
     OSC_MSB_Previous_2 = OSC_MSB_2;
@@ -411,477 +396,17 @@ void SID_emulator ()
 
     }
     // end of voice 3
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // gate change check
-    //
-    //  Gate_bit_voice_X variable: for now, main program can set it to any value , irq will reset it to 0
-    //   0 - change from 1 to 0 * start Release stage
-    //   1 - change from 0 to 1 * start Attack stage
-
-    switch (Gate_bit_1) {
-      case 0: // change from 1 to 0 * start Release stage
-        if (Gate_previous_1 == 1) {
-          ADSR_stage_1 = 4;// Set Release
-          LFSR15_1 = 0; // preventing ADSR bugs
-          LFSR5_1 = 0; // preventing ADSR bugs
-          LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Release_1];
-          Gate_previous_1 = 0; // set to 0
-        }
-        break;
-      case 1: // change from 0 to 1 * start Attack/Decay stage
-        
-        if (Gate_previous_1 == 0) {
-          ADSR_stage_1 = 1; //
-          LFSR15_1 = 0;
-          LFSR5_1 = 0;
-          LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Attack_1];
-          Gate_previous_1 = 1; // set to 1
-          // Switching to attack state unlocks the zero freeze.
-          hold_zero_1 = false;
-          
-        }
-        break;
-    }
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Increase LFSR15 counter for ADSR (scaled to match)
 
-    //LFSR15_1 = LFSR15_1 & 0x7fff; // 15bit
-    LFSR15_1 = LFSR15_1 + multiplier;;
-    // LFSR15_1 = LFSR15_1 & 0x7fff; // 15bit
-
-    if (   ((LFSR15_1 >= LFSR15_comparator_value_1 ) ) ) { //
-
-      Divided_LFSR15_1 = ((LFSR15_1 ) / LFSR15_comparator_value_1); //  count how many time (LFSR15_1 == LFSR15_comparator_value_1 ) was skipped (it's unsigned integer, so no decimals
-      LFSR15_1 = LFSR15_1 - Divided_LFSR15_1 * LFSR15_comparator_value_1; // set to zero, plus how manu uS has passed since (LFSR15_1 == LFSR15_comparator_value_1 )
-      // LFSR15_1 = 0;
-      //  LFSR5_1 = LFSR5_1++;
-      // LFSR5_1 = LFSR5_1 + 1;
-      LFSR5_1 = LFSR5_1 + Divided_LFSR15_1 ; // increase LFSR5 counter and check how many (LFSR5_1 == LFSR5_comparator_value_1) was skipped
-
-      if ((ADSR_stage_1 == 1) | (LFSR5_1 >= LFSR5_comparator_value_1) ) {
-
-        //  LFSR5_1 = 0;
-        Divided_LFSR5_1 = (LFSR5_1 ) / LFSR5_comparator_value_1; //      ceo5 = (lfsr5 - previous5) / comp5 // comp5 in attack is always 1
-
-        if (Divided_LFSR5_1 >= 1) {
-          LFSR5_1 = 0;
-        }
-        else {
-          LFSR5_1 =  LFSR5_1 - Divided_LFSR5_1 * LFSR5_comparator_value_1; //      set to zero, plus how manu uS has passed since (LFSR5_1 == LFSR5_comparator_value_1)
-        }
-
-        //     if (hold_zero_1) {
-        //       return;
-        //    }
-
-        if (hold_zero_1 == false) {
-          // 0-release finished , 1-Attack, 2-Decay, 3-Sustain, 4-Release
-          switch (ADSR_stage_1) {
-
-            case 0: // release finished, no change
-
-              // lalalalala
-
-              break;
-            case 1: // Attack stage
-              //  ADSR_volume_1 = (ADSR_volume_1 + 1) & 0xff;
-              ADSR_volume_1 = (ADSR_volume_1 + Divided_LFSR15_1) ; // increase  volume value .
-
-
-              if (ADSR_volume_1 >= 0xff) { // Attack finished, start Decay //
-                // Due to time passed since last volume increase, this can be bigger then 0xff.
-                // That means that decay stage already started and all values above 0xff is values that should be decrease in decay stage.
-                // This is not perfect, those values should be decrementing at decay rate, not as attack rate
-                // But is acceptable, because it would be inaccurate only for ADSR_attack values of 0 and 1, where LFSR15_comparator_value is smaller then multiplier.
-                // So, timing of decay is off by maximum of <multiplier-1> uS.
-                // Other values are decremented at steady -1 rate or less
-                ADSR_volume_1 = 0xff - (ADSR_volume_1 - 0xff); // we are in decay stage already, calculate it's volume, depending of uS passed since (ADSR_volume_1 == 0xff)
-                ADSR_stage_1 = 2; // set decay stage
-                hold_zero_1 = false;
-                LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Decay_1   ]; // set counter comparator to match decay value
-
-              }
-
-              break;
-            case 2: // Decay stage
-
-              // 1 step of volume down
-              //ADSR_volume_1 = ADSR_volume_1 - 1;
-              if (ADSR_volume_1 >= Divided_LFSR5_1)        {
-                ADSR_volume_1 = ADSR_volume_1 - Divided_LFSR5_1; //  keep it as positive number
-              }
-              else {
-                ADSR_volume_1 = 0; // no negative numbers, clip it to zero
-              }
-
-              if (ADSR_volume_1 <= (((uint16_t) ADSR_Sustain_1 << 4) + ADSR_Sustain_1)) {
-                ADSR_volume_1 = (( ADSR_Sustain_1 << 4) + ADSR_Sustain_1); // no matter what number of exact volume is passed, set it to exact value
-                LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Release_1   ]; // set counter comparator to match release value
-                // decay finished, time to sustain
-                ADSR_stage_1 = 3;
-
-              }
-              break;
-            case 3: // Sustain stage - checking for change in sustain value
-              if (ADSR_volume_1 > (((uint16_t) ADSR_Sustain_1 << 4) + ADSR_Sustain_1)) {
-                // new sustain value is smaller then old,  get back to decay.
-                ADSR_stage_1 = 2; // set Decay to new value
-                LFSR15_comparator_value_1 = ADSR_LFSR15[ADSR_Decay_1   ]; // set counter comparator to match decay value
-              }
-              break;
-            case 4: // Release stage
-              //  ADSR_volume_1 = (ADSR_volume_1 - 1) & 0xff;
-              if (ADSR_volume_1 >= Divided_LFSR5_1)        {
-                ADSR_volume_1 = ADSR_volume_1 - Divided_LFSR5_1; //  keep it as positive number
-              }
-              else {
-                ADSR_volume_1 = 0; // no negative numbers, clip it to zero
-              }
-              break;
-
-          } // ADSR_stage switch
-          LFSR5_comparator_value_1 = ADSR_Volume2LFSR5[ADSR_volume_1]; // must look into table, exact values are not possible
-          if (ADSR_volume_1 == 0) {
-            hold_zero_1 = true;
-          }
-        } // not hold zero
-      }  // LFSR5_comparator_value check
-    }  // LFSR15_comparator_value check
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////
-    //ADSR2
-    // test point //
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // gate change check
-    //
-    //  Gate_bit_voice_X variable: for now, main program can set it to any value , irq will reset it to 0
-    //   0 - change from 1 to 0 * start Release stage
-    //   1 - change from 0 to 1 * start Attack stage
-
-
-    //
-
-
-    switch (Gate_bit_2) {
-      case 0: // change from 1 to 0 * start Release stage
-
-        if (Gate_previous_2 == 1) {
-          ADSR_stage_2 = 4;// Set Release
-          LFSR15_2 = 0;
-          LFSR5_2 = 0;
-          LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Release_2];
-          Gate_previous_2 = 0; // set to 0
-
-
-        }
-
-
-
-        break;
-      case 1: // change from 0 to 1 * start Attack/Decay stage
-        if (Gate_previous_2 == 0) {
-          ADSR_stage_2 = 1; //
-          LFSR15_2 = 0;
-          LFSR5_2 = 0;
-          Gate_previous_2 = 1; // set to 1
-          // Switching to attack state unlocks the zero freeze.
-          hold_zero_2 = false;
-          LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Attack_2];
-        }
-
-
-        break;
-
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // Increase LFSR15 counter for ADSR (scaled to match)
-
-
-
-    LFSR15_2 = LFSR15_2 + multiplier;;
-    // LFSR15_2 = LFSR15_2 & 0x7fff; // 15bit
-
-
-
-    if (   ((LFSR15_2 >= LFSR15_comparator_value_2 ) ) ) { //
-
-      Divided_LFSR15_2 = ((LFSR15_2 ) / LFSR15_comparator_value_2); //  count how many time (LFSR15_2 == LFSR15_comparator_value_2 ) was skipped (it's unsigned integer, so no decimals
-      LFSR15_2 = LFSR15_2 - Divided_LFSR15_2 * LFSR15_comparator_value_2; // set to zero, plus how manu uS has passed since (LFSR15_2 == LFSR15_comparator_value_2 )
-      // LFSR15_2 = 0;
-      //  LFSR5_2 = LFSR5_2++;
-
-      //
-
-      // LFSR5_2 = LFSR5_2 + 1;
-      LFSR5_2 = LFSR5_2 + Divided_LFSR15_2 ; // increase LFSR5 counter and
-
-      if ((ADSR_stage_2 == 1) | (LFSR5_2 >= LFSR5_comparator_value_2) ) {
-
-        //  LFSR5_2 = 0;
-        Divided_LFSR5_2 = (LFSR5_2 ) / LFSR5_comparator_value_2; //      check how many (LFSR5_2 == LFSR5_comparator_value_2) was skipped
-
-        if (Divided_LFSR5_2 >= 1) {
-          LFSR5_2 = 0;
-        }
-
-        if (hold_zero_2 == false) {
-          // 0-release finished , 1-Attack, 2-Decay, 3-Sustain, 4-Release
-          switch (ADSR_stage_2) {
-
-            case 0: // release finished, no change
-              // lalalalala
-              break;
-            case 1: // Attack stage
-              //  ADSR_volume_2 = (ADSR_volume_2 + 1) & 0xff;
-              ADSR_volume_2 = (ADSR_volume_2 + Divided_LFSR15_2) ; // increase  volume value (value is unsigned 8bit, but variable is 16bit unsigned integer ), incliding skipped steps ;
-
-              if (ADSR_volume_2 >= 0xff) { // Attack finished, start Decay //
-                ADSR_volume_2 = 0xff - (ADSR_volume_2 - 0xff); // we are in decay stage already, calculate it's volume, depending of uS passed since (ADSR_volume_2 == 0xff)
-                ADSR_stage_2 = 2; // set decay stage
-                hold_zero_2 = false;
-                LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Decay_2   ]; // set counter comparator to match decay value
-
-              }
-
-              break;
-            case 2: // Decay stage
-
-              // 1 step of volume down
-              //ADSR_volume_2 = ADSR_volume_2 - 1;
-              if (ADSR_volume_2 >= Divided_LFSR5_2)        {
-                ADSR_volume_2 = ADSR_volume_2 - Divided_LFSR5_2; //  keep it as positive number
-              }
-              else {
-                ADSR_volume_2 = 0; // no negative numbers, clip it to zero
-              }
-
-              if (ADSR_volume_2 <= (( ADSR_Sustain_2 << 4) + ADSR_Sustain_2)) {
-                ADSR_volume_2 = (( ADSR_Sustain_2 << 4) + ADSR_Sustain_2);
-                LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Release_2   ]; // set counter comparator to match release value
-                // decay finished, time to sustain
-                ADSR_stage_2 = 3;
-
-              }
-              break;
-            case 3: // Sustain stage - checking for change in sustain value
-              if (ADSR_volume_2 > (( ADSR_Sustain_2 << 4) + ADSR_Sustain_2)) {
-                // new sustain value is smaller then old,  get back to decay.
-
-                ADSR_stage_2 = 2; // set Decay to new value
-                LFSR15_comparator_value_2 = ADSR_LFSR15[ADSR_Decay_2   ]; // set counter comparator to match decay value
-              }
-              break;
-            case 4: // Release stage
-
-              //  ADSR_volume_2 = (ADSR_volume_2 - 1) & 0xff;
-              if (ADSR_volume_2 >= Divided_LFSR5_2)        {
-                ADSR_volume_2 = ADSR_volume_2 - Divided_LFSR5_2; //  keep it as positive number
-              }
-              else {
-                ADSR_volume_2 = 0; // no negative numbers, clip it to zero
-              }
-              break;
-
-          } // ADSR_stage switch
-
-
-          LFSR5_comparator_value_2 = ADSR_Volume2LFSR5[ADSR_volume_2]; // must look into 8bit table, exact values are not possible
-
-
-          if (ADSR_volume_2 == 0) {
-            hold_zero_2 = true;
-          }
-
-        } // not hold zero
-      }  // LFSR5_comparator_value check
-
-      //
-
-
-    }  // LFSR15_comparator_value check
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////
-    //ADSR3
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // gate change check
-    //
-    //  Gate_bit_voice_X variable: for now, main program can set it to any value , irq will reset it to 0
-    //   0 - change from 1 to 0 * start Release stage
-    //   1 - change from 0 to 1 * start Attack stage
-    //    2 - no change
-
-    //
+    EnvelopeGenerator_clock_dt(&gen1,multiplier);
+    ADSR_volume_1 = EnvelopeGenerator_output(&gen1);
+    EnvelopeGenerator_clock_dt(&gen2,multiplier);
+    ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
+    EnvelopeGenerator_clock_dt(&gen3,multiplier);
+    ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
     
-
-    switch (Gate_bit_3) {
-      case 0: // change from 1 to 0 * start Release stage
-
-        if (Gate_previous_3 == 1) {
-          ADSR_stage_3 = 4;// Set Release
-          LFSR15_3 = 0;
-          LFSR5_3 = 0;
-          LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Release_3];
-          Gate_previous_3 = 0; // set to 0
-
-        }
-
-
-
-        break;
-      case 1: // change from 0 to 1 * start Attack/Decay stage
-        if (Gate_previous_3 == 0) {
-          ADSR_stage_3 = 1; //
-          LFSR15_3 = 0;
-          LFSR5_3 = 0;
-          Gate_previous_3 = 1; // set to 1
-          // Switching to attack state unlocks the zero freeze.
-          hold_zero_3 = false;
-          LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Attack_3];
-        }
-
-
-        break;
-
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-    // Increase LFSR15 counter for ADSR (scaled to match)
-
-
-
-    LFSR15_3 = LFSR15_3 + multiplier;;
-    // LFSR15_3 = LFSR15_3 & 0x7fff; // 15bit
-
-
-
-    if (   ((LFSR15_3 >= LFSR15_comparator_value_3 ) ) ) { //
-
-      Divided_LFSR15_3 = ((LFSR15_3 ) / LFSR15_comparator_value_3); //  count how many time (LFSR15_3 == LFSR15_comparator_value_3 ) was skipped (it's unsigned integer, so no decimals
-      LFSR15_3 = LFSR15_3 - Divided_LFSR15_3 * LFSR15_comparator_value_3; // set to zero, plus how manu uS has passed since (LFSR15_3 == LFSR15_comparator_value_3 )
-      // LFSR15_3 = 0;
-      //  LFSR5_3 = LFSR5_3++;
-
-      //
-
-      // LFSR5_3 = LFSR5_3 + 1;
-      LFSR5_3 = LFSR5_3 + Divided_LFSR15_3 ; // increase LFSR5 counter and check how many (LFSR5_3 >= LFSR5_comparator_value_3) was skipped
-
-      if ((ADSR_stage_3 == 1) | (LFSR5_3 >= LFSR5_comparator_value_3) ) {
-
-        //  LFSR5_3 = 0;
-        Divided_LFSR5_3 = (LFSR5_3 ) / LFSR5_comparator_value_3; //      ceo5 = (lfsr5 - previous5) / comp5 // comp5 in attack is always 1
-        if (Divided_LFSR5_3 >= 1) {
-          LFSR5_3 = 0;
-        }
-        else {
-
-          LFSR5_3 =  LFSR5_3 - Divided_LFSR5_3 * LFSR5_comparator_value_3; //      set to zero, plus how manu uS has passed since (LFSR5_3 == LFSR5_comparator_value_3)
-        }
-
-
-
-        if (hold_zero_3 == false) {
-          // 0-release finished , 1-Attack, 2-Decay, 3-Sustain, 4-Release
-          switch (ADSR_stage_3) {
-            case 0: // release finished, no change
-              // lalalalala
-              break;
-            case 1: // Attack stage
-              //  ADSR_volume_3 = (ADSR_volume_3 + 1) & 0xff;
-              ADSR_volume_3 = (ADSR_volume_3 + Divided_LFSR15_3) ; // increase  volume value (value is unsigned 8bit, but variable is 16bit unsigned integer ), including skipped steps ;
-              if (ADSR_volume_3 >= 0xff) { // Attack finished, start Decay //
-                ADSR_volume_3 = 0xff - (ADSR_volume_3 - 0xff); // we are in decay stage already, calculate it's volume, depending of uS passed since (ADSR_volume_3 == 0xff)
-                ADSR_stage_3 = 2; // set decay stage
-                hold_zero_3 = false;
-                LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Decay_3   ]; // set counter comparator to match decay value
-              }
-              break;
-            case 2: // Decay stage
-
-              // 1 step of volume down
-              //ADSR_volume_3 = ADSR_volume_3 - 1;
-              if (ADSR_volume_3 >= Divided_LFSR5_3)        {
-                ADSR_volume_3 = ADSR_volume_3 - Divided_LFSR5_3; //  keep it as positive number
-              }
-              else {
-                ADSR_volume_3 = 0; // no negative numbers, clip it to zero
-              }
-
-              if (ADSR_volume_3 <= (( ADSR_Sustain_3 << 4) + ADSR_Sustain_3)) {
-                ADSR_volume_3 = (( ADSR_Sustain_3 << 4) + ADSR_Sustain_3);
-                LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Release_3   ]; // set counter comparator to match release value
-                // decay finished, time to sustain
-                ADSR_stage_3 = 3;
-
-              }
-              break;
-            case 3: // Sustain stage - checking for change in sustain value
-              if (ADSR_volume_3 > (( ADSR_Sustain_3 << 4) + ADSR_Sustain_3)) {
-                // new sustain value is smaller then old,  get back to decay.
-
-
-                ADSR_stage_3 = 2; // set Decay to new value
-                LFSR15_comparator_value_3 = ADSR_LFSR15[ADSR_Decay_3   ]; // set counter comparator to match decay value
-              }
-              break;
-            case 4: // Release stage
-
-              //  ADSR_volume_3 = (ADSR_volume_3 - 1) & 0xff;
-              if (ADSR_volume_3 >= Divided_LFSR5_3)        {
-                ADSR_volume_3 = ADSR_volume_3 - Divided_LFSR5_3; //  keep it as positive number
-              }
-              else {
-                ADSR_volume_3 = 0; // no negative numbers, clip it to zero
-              }
-              break;
-
-          } // ADSR_stage switch
-
-
-          LFSR5_comparator_value_3 = ADSR_Volume2LFSR5[ADSR_volume_3]; // must look into table, exact values are not possible
-
-
-          if (ADSR_volume_3 == 0) {
-            hold_zero_3 = true;
-          }
-
-        } // not hold zero
-      }  // LFSR5_comparator_value check
-
-      //
-
-
-    }  // LFSR15_comparator_value check
-
-
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //
-
     // finished calculations, time to set main volume
 
     // WaveformDA : 12bit     ( 0 -> 0x0fff  )
@@ -1045,11 +570,10 @@ void SID_emulator ()
     if (Volume > 0xfffff) Volume = 0xfffff; // remove clipping (resonance sensitivity), just in case..
 
     main_volume_32bit = (Volume) ; //& 0xfffff ; // 20bit
-    main_volume_32bit = (main_volume_32bit * 0x10); // 28bit
-    main_volume_32bit = (main_volume_32bit) >> 7; // 28-12 = 16bit
+    main_volume_32bit = (main_volume_32bit) >> 3; // 28-12 = 16bit
     main_volume_32bit = (main_volume_32bit *  (SID[24]&0x0F)); //16+4 =20bit MASTER_VOLUME
     main_volume_32bit = (main_volume_32bit) >> 9; // 28-12 = 16bit
-    main_volume = main_volume_32bit + 1; // i forgot why i added this. Maybe for minimum value for CCR1?
+    main_volume = main_volume_32bit;
 
 
     ENV3 = (ADSR_volume_3) & 0xff; ; // ((Volume_3 + 0x80000) >> 12) & 0xff; // value for REG_28

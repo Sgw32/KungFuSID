@@ -56,9 +56,9 @@ void EnvelopeGenerator_clock(struct EnvelopeGenerator* gen);
 void EnvelopeGenerator_clock_dt(struct EnvelopeGenerator* gen,cycle_count delta_t);
 void EnvelopeGenerator_reset(struct EnvelopeGenerator* gen);
 
-void EnvelopeGenerator_writeCONTROL_REG(struct EnvelopeGenerator* gen,reg8 data);
-void EnvelopeGenerator_writeATTACK_DECAY(struct EnvelopeGenerator* gen,reg8 data);
-void EnvelopeGenerator_writeSUSTAIN_RELEASE(struct EnvelopeGenerator* gen,reg8 data);
+FORCE_INLINE void EnvelopeGenerator_writeCONTROL_REG(struct EnvelopeGenerator* gen,reg8 data);
+FORCE_INLINE void EnvelopeGenerator_writeATTACK_DECAY(struct EnvelopeGenerator* gen,reg8 data);
+FORCE_INLINE void EnvelopeGenerator_writeSUSTAIN_RELEASE(struct EnvelopeGenerator* gen,reg8 data);
 reg8 EnvelopeGenerator_readENV(struct EnvelopeGenerator* gen);
 
   // 8-bit envelope output.

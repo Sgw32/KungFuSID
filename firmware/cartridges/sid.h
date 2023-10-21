@@ -312,67 +312,11 @@ const uint32_t  ADSR_LFSR15 [] = {
 
 
 //ADSR 1
-
 uint32_t ADSR_volume_1 = 0; // 8bit ADSR volume, but must use uint32_t because it will  // 256 different values of volume
-uint32_t LFSR15_1 = 0x7fff; // 15bit ADSR LSFR //
-uint32_t LFSR15_comparator_value_1 = 0; // 15bit comparator for LFSR15
-uint16_t Divided_LFSR15_1 = 0; // whole number helper variable
-uint16_t Divided_LFSR5_1 = 0; // whole number helper variable
-uint32_t LFSR5_1 = 0; //  counter that is dividing  LFSR15 counter to ADSR_Volume counter. It is taken from predefined ADSR_Volume values (Catch22)
-uint32_t LFSR5_comparator_value_1 = 1; // value that... uff... compare
-uint8_t ADSR_Attack_1 = 0; // Attack value (0-15)
-uint8_t ADSR_Decay_1 = 0; // Decay value (0-15)
-uint8_t ADSR_Sustain_1 = 0; // Sustain value (0-15)
-uint8_t ADSR_Release_1 = 0; // Release value (0-15)
-uint8_t ADSR_stage_1;  // 0-release finished , 1-Attack, 2-Decay, 3-Sustain, 4-Release
-bool hold_zero_1 = false;
-
 //ADSR 2
-
 int16_t ADSR_volume_2 = 0; // 8bit ADSR volume // 256 different values of volume
-uint32_t LFSR15_2 = 0x7fff; // 15bit ADSR LSFR, but can be used as counter in  coding //
-uint32_t LFSR15_comparator_value_2 = 0; // 15bit comparator for LFSR15
-uint16_t Divided_LFSR15_2 = 0;
-uint16_t Divided_LFSR5_2 = 0;
-uint32_t LFSR5_2 = 0; //  counter that is dividing  LFSR15 counter to ADSR_Volume counter. It is dirived from predefined ADSR_Volume values (Catch22)
-uint32_t LFSR5_comparator_value_2 = 1; // value that
-uint8_t ADSR_Attack_2 = 0; // Attack value (0-15)
-uint8_t ADSR_Decay_2 = 0; // Decay value (0-15)
-uint8_t ADSR_Sustain_2 = 0; // Sustain value (0-15)
-uint8_t ADSR_Release_2 = 0; // Release value (0-15)
-uint8_t ADSR_stage_2;  // 0-release finished , 1-Attack, 2-Decay, 3-Sustain, 4-Release
-bool hold_zero_2 = false;
 //ADSR 3
-
 int16_t ADSR_volume_3 = 0; // 8bit ADSR volume // 256 different values of volume
-uint32_t LFSR15_3 = 0x7fff; // 15bit ADSR LSFR, but can be used as counter in  coding //
-uint32_t LFSR15_comparator_value_3 = 0; // 15bit comparator for LFSR15
-uint16_t Divided_LFSR15_3 = 0;
-uint16_t Divided_LFSR5_3 = 0;
-uint32_t LFSR5_3 = 0; //  counter that is dividing  LFSR15 counter to ADSR_Volume counter. It is dirived from predefined ADSR_Volume values (Catch22)
-uint32_t LFSR5_comparator_value_3 = 1; // value that
-uint8_t ADSR_Attack_3 = 0; // Attack value (0-15)
-uint8_t ADSR_Decay_3 = 0; // Decay value (0-15)
-uint8_t ADSR_Sustain_3 = 0; // Sustain value (0-15)
-uint8_t ADSR_Release_3 = 0; // Release value (0-15)
-uint8_t ADSR_stage_3;  // 0-release finished , 1-Attack, 2-Decay, 3-Sustain, 4-Release
-bool hold_zero_3 = false;
-
-// gate bit
-
-uint8_t Gate_bit_1 = 1; //
-uint8_t Gate_bit_2 = 1;
-uint8_t Gate_bit_3 = 1;
-/*
-   Gate_bit_X variable:
-   0 - change from 1 to 0 * start Release stage
-   1 - change from 0 to 1 * start Attack stage )
-
-*/
-
-uint8_t Gate_previous_1 = 0; // need to know what was previous gate bit
-uint8_t Gate_previous_2 = 0; // need to know what was previous gate bit
-uint8_t Gate_previous_3 = 0; // need to know what was previous gate bit
 
 
 uint8_t waveform_switch_1 = 0; // 0-15, depending of waveform
