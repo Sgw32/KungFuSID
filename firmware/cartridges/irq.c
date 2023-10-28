@@ -564,7 +564,7 @@ FORCE_INLINE void SID_emulator ()
     // time to get positive about it
 
 
-    Volume = ((Volume_filter_output + Volume_unfiltered) >> 2 ) + 0x80000; // keep as 20bit unsigned value, but it's divided by 4, not 3, because resonance
+    Volume = ((Volume_filter_output + Volume_unfiltered) >> 3 ) + 0x80000; // keep as 20bit unsigned value, but it's divided by 4, not 3, because resonance
 
     if (Volume < 0) Volume = 0;
     if (Volume > 0xfffff) Volume = 0xfffff; // remove clipping (resonance sensitivity), just in case..
@@ -576,11 +576,9 @@ FORCE_INLINE void SID_emulator ()
     main_volume = main_volume_32bit;
 
 
-    ENV3 = (ADSR_volume_3) & 0xff; ; // ((Volume_3 + 0x80000) >> 12) & 0xff; // value for REG_28
+    ENV3 = (ADSR_volume_3) & 0xff; // ((Volume_3 + 0x80000) >> 12) & 0xff; // value for REG_28
     SID[25] = POTX;
     SID[26] = POTY;
     SID[27] = (WaveformDA_3 >> 4) & 0xff; //WaveformDA_3 - 12 bit
     SID[28] = ENV3;
-
-    // btw, lot of "i hope" in this code... oh, well... :-)
 }
