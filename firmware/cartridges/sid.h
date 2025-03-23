@@ -101,26 +101,6 @@ int32_t Volume_filter_output = 0;
 
 uint32_t i , j , k , l ; // i run out of names for temporary variables
 
-
-typedef union {
-  struct {
-      uint8_t lo;
-      uint8_t hi;
-      uint8_t stub1;
-      uint8_t stub2;
-  };
-  uint32_t value;
-} U16_Register;
-
-typedef union {
-  struct {
-      uint8_t lo;
-      uint8_t hi;
-  };
-  uint16_t value;
-} U16_Register_16b;
-
-
 // Precomputed Q_1024_div values for FILTER_Resonance from 0 to 15
 const uint32_t Q_1024_LookupTable[16] = {
   1448, 1323, 1218, 1128, 1051, 984, 925, 872,
@@ -470,7 +450,7 @@ static uint32_t SID[] = {                  //  array that hold values of SID reg
 
 // BlueSID
 
-U16_Register_16b FILTER_HiLo = {.value=0}; // 11bit
+uint16_t FILTER_HiLo = 0; // 11bit
 uint8_t FILTER_Resonance = 0; // 4bit
 
 
@@ -511,9 +491,9 @@ uint32_t OSC_3 = 0; // main 24bit  accumulator oscilator - voice 3
 //   uint32_t value;
 // } OSC_Register;
 
-U16_Register OSC_1_HiLo = {.value = 0x0000}; 
-U16_Register OSC_2_HiLo = {.value = 0x0000}; 
-U16_Register OSC_3_HiLo = {.value = 0x0000}; 
+uint32_t OSC_1_HiLo = 0x0000; // 0
+uint32_t OSC_2_HiLo = 0x0000; // 0
+uint32_t OSC_3_HiLo = 0x0000; // 0
 
 
 
@@ -523,6 +503,9 @@ const uint32_t OSC_MSB = 2048;       // B0000 0000 0000 0000 1000 0000 0000
 const uint16_t B4095 = 4095;         // B0000 0000 0000 0000 1111 1111 1111
 const uint16_t B4096 = 4096;         // B0000 0000 0000 0001 0000 0000 0000
 const uint16_t B2047 = 2047;         // B0000 0000 0000 0000 0111 1111 1111
+
+
+uint16_t B2047_MSB = 0;         // B0000 0000 0000 0000 0111 1111 1111
 
 
 uint8_t OSC_MSB_1; // Oscilator's MSB
@@ -652,9 +635,9 @@ uint32_t bit17_3 = 0;
 uint8_t bit_0_3 = 0;
 
 // initial setup for SID registers - can be used for testing or for sketch with only interrupt (with just SID emulator, and direct change registers)
-U16_Register PW_HiLo_voice_1 = {.value = 2048};  // 2048 = 50% initial test
-U16_Register PW_HiLo_voice_2 = {.value = 2048};  // 2048 = 50% initial test
-U16_Register PW_HiLo_voice_3 = {.value = 2048};  // 2048 = 50% initial test
+uint16_t PW_HiLo_voice_1 = 2048;  // 2048 = 50% initial test
+uint16_t PW_HiLo_voice_2 = 2048;  // 2048 = 50% initial test
+uint16_t PW_HiLo_voice_3 = 2048;  // 2048 = 50% initial test
 
 
 // ADSR volume (8bit) to LFSR5_comparator table
