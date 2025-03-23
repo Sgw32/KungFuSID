@@ -62,6 +62,7 @@ FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
 	if (!(addr&0b100000))
 	{
             led_toggle();
+            //Data is in fact 8 bits
             setreg(addr&0b11111,data);
 	}
 }
