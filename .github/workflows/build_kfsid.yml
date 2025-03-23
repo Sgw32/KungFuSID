@@ -36,7 +36,7 @@ jobs:
     # Step 4: Check if the build was successful
     - name: Verify build success
       run: |
-        if [ ! -f firmware/build/*.bin ]; then
+        if ! ls firmware/build/*.bin 1>/dev/null 2>&1; then
           echo "Build failed: No .bin file found in the firmware/build/ folder!"
           exit 1
         fi

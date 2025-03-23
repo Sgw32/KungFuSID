@@ -1,9 +1,10 @@
+[![KungFuSID Build](https://github.com/Sgw32/KungFuSID/actions/workflows/build_kfsid.yml/badge.svg)](https://github.com/Sgw32/KungFuSID/actions/workflows/build_kfsid.yml)
+
 # Kung Fu SID GD32 version
 
 ![Usage with MixSID on C64](pics/kfsid_units.jpg)
 
 IMPORTANT! Firmware is adjusted for new Kung Fu SID hardware (and only)
-
 
 ## Introduction
 
