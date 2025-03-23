@@ -1,0 +1,1193 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "Kung Fu SID"
+Date "2023-05-22"
+Rev "1"
+Comp "open hardware"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L KungFuSID-rescue:GD32F405RGT6-MCU_GD32 U3
+U 1 1 5DA61D68
+P 7900 3100
+F 0 "U3" H 8400 4900 50  0000 C CNN
+F 1 "GD32F405RGT6" H 8400 1350 50  0000 C CNN
+F 2 "Package_QFP:LQFP-64_10x10mm_P0.5mm" H 7300 1400 50  0001 R CNN
+F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00037051.pdf" H 7900 3100 50  0001 C CNN
+	1    7900 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR03
+U 1 1 5DA629CA
+P 2250 3600
+F 0 "#PWR03" H 2250 3350 50  0001 C CNN
+F 1 "GND-power" H 2255 3427 50  0000 C CNN
+F 2 "" H 2250 3600 50  0001 C CNN
+F 3 "" H 2250 3600 50  0001 C CNN
+	1    2250 3600
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	2000 3000 2100 2900
+Entry Wire Line
+	3800 3000 3700 2900
+Entry Wire Line
+	3800 3100 3700 3000
+Entry Wire Line
+	3800 3200 3700 3100
+Entry Wire Line
+	3800 3300 3700 3200
+Entry Wire Line
+	3800 3400 3700 3300
+Entry Wire Line
+	3800 3500 3700 3400
+Entry Wire Line
+	3800 3600 3700 3500
+Entry Wire Line
+	3800 3700 3700 3600
+Text Label 3700 2900 2    50   ~ 0
+CD7
+Text Label 3700 3000 2    50   ~ 0
+CD6
+Text Label 3700 3100 2    50   ~ 0
+CD5
+Text Label 3700 3200 2    50   ~ 0
+CD4
+Text Label 3700 3300 2    50   ~ 0
+CD3
+Text Label 3700 3400 2    50   ~ 0
+CD2
+Text Label 3700 3500 2    50   ~ 0
+CD1
+Text Label 3700 3600 2    50   ~ 0
+CD0
+Entry Wire Line
+	2100 3100 2000 3200
+Entry Wire Line
+	2100 3200 2000 3300
+Entry Wire Line
+	2100 3300 2000 3400
+Entry Wire Line
+	2100 3400 2000 3500
+Entry Wire Line
+	2100 3500 2000 3600
+Text Label 2250 3500 2    50   ~ 0
+A4
+Text Label 2250 3400 2    50   ~ 0
+A3
+Text Label 2250 3300 2    50   ~ 0
+A2
+Text Label 2250 3200 2    50   ~ 0
+A1
+Entry Wire Line
+	6850 3300 6950 3200
+Entry Wire Line
+	6850 3400 6950 3300
+Entry Wire Line
+	6850 3500 6950 3400
+Entry Wire Line
+	6850 3600 6950 3500
+Entry Wire Line
+	6850 3700 6950 3600
+Entry Wire Line
+	6850 3800 6950 3700
+Entry Wire Line
+	6850 3900 6950 3800
+Entry Wire Line
+	6850 4000 6950 3900
+Entry Wire Line
+	8850 1800 8950 1900
+Entry Wire Line
+	8850 2100 8950 2200
+Entry Wire Line
+	8850 3200 8950 3300
+Entry Wire Line
+	8850 3300 8950 3400
+Entry Wire Line
+	8850 3400 8950 3500
+Entry Wire Line
+	8850 3500 8950 3600
+Text Label 8600 1800 0    50   ~ 0
+EXT_IN
+Text Label 8600 2000 0    50   ~ 0
+SPECIAL
+Text Label 8600 2100 0    50   ~ 0
+POT_X
+Text Label 8600 2200 0    50   ~ 0
+POT_Y
+Text Label 8600 2800 0    50   ~ 0
+SWDIO
+Text Label 8600 2900 0    50   ~ 0
+SWCLK
+$Comp
+L KungFuSID-rescue:R-Device R6
+U 1 1 5DE8C88B
+P 6700 1050
+F 0 "R6" V 6600 1050 50  0000 C CNN
+F 1 "10k" V 6800 1050 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 6630 1050 50  0001 C CNN
+F 3 "~" H 6700 1050 50  0001 C CNN
+	1    6700 1050
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR09
+U 1 1 5DE94224
+P 6400 1050
+F 0 "#PWR09" H 6400 800 50  0001 C CNN
+F 1 "GND-power" H 6405 877 50  0000 C CNN
+F 2 "" H 6400 1050 50  0001 C CNN
+F 3 "" H 6400 1050 50  0001 C CNN
+	1    6400 1050
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:Crystal-Device Y1
+U 1 1 5DEAC680
+P 5800 2650
+F 0 "Y1" V 5754 2781 50  0000 L CNN
+F 1 "8MHz" V 5845 2781 50  0000 L CNN
+F 2 "mod:Crystal_SMD_3225-2Pin_3.2x2.5mm" H 5800 2650 50  0001 C CNN
+F 3 "~" H 5800 2650 50  0001 C CNN
+	1    5800 2650
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C10
+U 1 1 5DEC40A8
+P 5800 2350
+F 0 "C10" H 5915 2396 50  0000 L CNN
+F 1 "20p" H 5915 2305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 5838 2200 50  0001 C CNN
+F 3 "~" H 5800 2350 50  0001 C CNN
+	1    5800 2350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C11
+U 1 1 5DEDC4F5
+P 5800 2950
+F 0 "C11" H 5915 2996 50  0000 L CNN
+F 1 "20p" H 5915 2905 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 5838 2800 50  0001 C CNN
+F 3 "~" H 5800 2950 50  0001 C CNN
+	1    5800 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR07
+U 1 1 5DEE4BD8
+P 5600 3150
+F 0 "#PWR07" H 5600 2900 50  0001 C CNN
+F 1 "GND-power" H 5605 2977 50  0000 C CNN
+F 2 "" H 5600 3150 50  0001 C CNN
+F 3 "" H 5600 3150 50  0001 C CNN
+	1    5600 3150
+	1    0    0    -1  
+$EndComp
+Text Label 8600 3200 0    50   ~ 0
+A0
+Text Label 8600 3300 0    50   ~ 0
+A1
+Text Label 8600 3400 0    50   ~ 0
+A2
+Text Label 8600 3500 0    50   ~ 0
+A3
+Text Label 8600 3600 0    50   ~ 0
+A4
+Text Label 6950 3200 0    50   ~ 0
+D0
+Text Label 6950 3300 0    50   ~ 0
+D1
+Text Label 6950 3400 0    50   ~ 0
+D2
+Text Label 6950 3500 0    50   ~ 0
+D3
+Text Label 6950 3600 0    50   ~ 0
+D4
+Text Label 6950 3700 0    50   ~ 0
+D5
+Text Label 6950 3800 0    50   ~ 0
+D6
+Text Label 6950 3900 0    50   ~ 0
+D7
+Text Label 6950 4500 0    50   ~ 0
+~LED
+$Comp
+L KungFuSID-rescue:R-Device R5
+U 1 1 5DFA7217
+P 6550 4500
+F 0 "R5" V 6450 4500 50  0000 C CNN
+F 1 "510R" V 6650 4500 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 6480 4500 50  0001 C CNN
+F 3 "~" H 6550 4500 50  0001 C CNN
+	1    6550 4500
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:LED-Device D1
+U 1 1 5DFA7472
+P 6150 4500
+F 0 "D1" H 6150 4400 50  0000 C CNN
+F 1 "LED" H 6150 4600 50  0000 C CNN
+F 2 "LED_SMD:LED_0402_1005Metric" H 6150 4500 50  0001 C CNN
+F 3 "~" H 6150 4500 50  0001 C CNN
+	1    6150 4500
+	-1   0    0    1   
+$EndComp
+$Comp
+L KungFuSID-rescue:+3V3-power #PWR08
+U 1 1 5DFA754E
+P 5950 4450
+F 0 "#PWR08" H 5950 4300 50  0001 C CNN
+F 1 "+3V3-power" H 5965 4623 50  0000 C CNN
+F 2 "" H 5950 4450 50  0001 C CNN
+F 3 "" H 5950 4450 50  0001 C CNN
+	1    5950 4450
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:AMS1117-3.3-Regulator_Linear U1
+U 1 1 5E1AC2EC
+P 2150 6200
+F 0 "U1" H 2150 6442 50  0000 C CNN
+F 1 "AMS1117-3.3" H 2150 6351 50  0000 C CNN
+F 2 "Package_TO_SOT_SMD:SOT-89-3" H 2150 6400 50  0001 C CNN
+F 3 "http://www.advanced-monolithic.com/pdf/ds1117.pdf" H 2250 5950 50  0001 C CNN
+	1    2150 6200
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C1
+U 1 1 5E1AC467
+P 1650 6400
+F 0 "C1" H 1765 6446 50  0000 L CNN
+F 1 "10u" H 1765 6355 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 1688 6250 50  0001 C CNN
+F 3 "~" H 1650 6400 50  0001 C CNN
+	1    1650 6400
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C2
+U 1 1 5E1AC522
+P 2650 6350
+F 0 "C2" H 2765 6396 50  0000 L CNN
+F 1 "10u" H 2765 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 2688 6200 50  0001 C CNN
+F 3 "~" H 2650 6350 50  0001 C CNN
+	1    2650 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR02
+U 1 1 5E1EAF4E
+P 2150 6600
+F 0 "#PWR02" H 2150 6350 50  0001 C CNN
+F 1 "GND-power" H 2155 6427 50  0000 C CNN
+F 2 "" H 2150 6600 50  0001 C CNN
+F 3 "" H 2150 6600 50  0001 C CNN
+	1    2150 6600
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:+5V-power #PWR01
+U 1 1 5E20498D
+P 1650 6150
+F 0 "#PWR01" H 1650 6000 50  0001 C CNN
+F 1 "+5V-power" H 1665 6323 50  0000 C CNN
+F 2 "" H 1650 6150 50  0001 C CNN
+F 3 "" H 1650 6150 50  0001 C CNN
+	1    1650 6150
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C12
+U 1 1 5E26E823
+P 6650 1750
+F 0 "C12" V 6800 1750 50  0000 C CNN
+F 1 "2.2u" V 6500 1750 50  0000 C CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 6688 1600 50  0001 C CNN
+F 3 "~" H 6650 1750 50  0001 C CNN
+	1    6650 1750
+	0    -1   -1   0   
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C13
+U 1 1 5E26EA14
+P 6650 2150
+F 0 "C13" V 6500 2150 50  0000 C CNN
+F 1 "2.2u" V 6800 2150 50  0000 C CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 6688 2000 50  0001 C CNN
+F 3 "~" H 6650 2150 50  0001 C CNN
+	1    6650 2150
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR010
+U 1 1 5E2974D8
+P 6400 2200
+F 0 "#PWR010" H 6400 1950 50  0001 C CNN
+F 1 "GND-power" H 6405 2027 50  0000 C CNN
+F 2 "" H 6400 2200 50  0001 C CNN
+F 3 "" H 6400 2200 50  0001 C CNN
+	1    6400 2200
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:+3V3-power #PWR012
+U 1 1 5E34F4CA
+P 7950 1300
+F 0 "#PWR012" H 7950 1150 50  0001 C CNN
+F 1 "+3V3-power" H 7965 1473 50  0000 C CNN
+F 2 "" H 7950 1300 50  0001 C CNN
+F 3 "" H 7950 1300 50  0001 C CNN
+	1    7950 1300
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR011
+U 1 1 5E36DFE9
+P 7900 4900
+F 0 "#PWR011" H 7900 4650 50  0001 C CNN
+F 1 "GND-power" H 7905 4727 50  0000 C CNN
+F 2 "" H 7900 4900 50  0001 C CNN
+F 3 "" H 7900 4900 50  0001 C CNN
+	1    7900 4900
+	1    0    0    -1  
+$EndComp
+Text Label 6950 1500 0    50   ~ 0
+~RST
+Text Label 6950 1700 0    50   ~ 0
+BOOT0
+$Comp
+L KungFuSID-rescue:Logo_Open_Hardware_Small-Graphic #LOGO1
+U 1 1 5E45E2E4
+P 7350 6850
+F 0 "#LOGO1" H 7350 7125 50  0001 C CNN
+F 1 "Logo_Open_Hardware_Small" H 7350 6625 50  0001 C CNN
+F 2 "" H 7350 6850 50  0001 C CNN
+F 3 "~" H 7350 6850 50  0001 C CNN
+	1    7350 6850
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C3
+U 1 1 5E45ECF0
+P 3050 6350
+F 0 "C3" H 3165 6396 50  0000 L CNN
+F 1 "100n" H 3165 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 3088 6200 50  0001 C CNN
+F 3 "~" H 3050 6350 50  0001 C CNN
+	1    3050 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C4
+U 1 1 5E4C6612
+P 3450 6350
+F 0 "C4" H 3565 6396 50  0000 L CNN
+F 1 "100n" H 3565 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 3488 6200 50  0001 C CNN
+F 3 "~" H 3450 6350 50  0001 C CNN
+	1    3450 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C5
+U 1 1 5E4D6F17
+P 3850 6350
+F 0 "C5" H 3965 6396 50  0000 L CNN
+F 1 "100n" H 3965 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 3888 6200 50  0001 C CNN
+F 3 "~" H 3850 6350 50  0001 C CNN
+	1    3850 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C6
+U 1 1 5E4E781E
+P 4250 6350
+F 0 "C6" H 4365 6396 50  0000 L CNN
+F 1 "100n" H 4365 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 4288 6200 50  0001 C CNN
+F 3 "~" H 4250 6350 50  0001 C CNN
+	1    4250 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C7
+U 1 1 5E5194C0
+P 4650 6350
+F 0 "C7" H 4765 6396 50  0000 L CNN
+F 1 "100n" H 4765 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 4688 6200 50  0001 C CNN
+F 3 "~" H 4650 6350 50  0001 C CNN
+	1    4650 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C8
+U 1 1 5E529DD9
+P 5050 6350
+F 0 "C8" H 5165 6396 50  0000 L CNN
+F 1 "100n" H 5165 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 5088 6200 50  0001 C CNN
+F 3 "~" H 5050 6350 50  0001 C CNN
+	1    5050 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C-Device C9
+U 1 1 5E53A6EE
+P 5450 6350
+F 0 "C9" H 5565 6396 50  0000 L CNN
+F 1 "100n" H 5565 6305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0402_1005Metric" H 5488 6200 50  0001 C CNN
+F 3 "~" H 5450 6350 50  0001 C CNN
+	1    5450 6350
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:Conn_01x02_Male-Connector J1
+U 1 1 5E56E86E
+P 9300 2800
+F 0 "J1" V 9360 2840 50  0000 L CNN
+F 1 "SWD" V 9550 2550 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 9300 2800 50  0001 C CNN
+F 3 "~" H 9300 2800 50  0001 C CNN
+	1    9300 2800
+	-1   0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:+3V3-power #PWR04
+U 1 1 5DB88EE5
+P 2650 6150
+F 0 "#PWR04" H 2650 6000 50  0001 C CNN
+F 1 "+3V3-power" H 2665 6323 50  0000 C CNN
+F 2 "" H 2650 6150 50  0001 C CNN
+F 3 "" H 2650 6150 50  0001 C CNN
+	1    2650 6150
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:C64-SID-Socket-hackup U2
+U 1 1 648D90C9
+P 2900 3800
+F 0 "U2" H 2900 5565 50  0000 C CNN
+F 1 "C64-SID-Socket-hackup" H 2900 5474 50  0000 C CNN
+F 2 "mod:DIP-28_W15.24mm" H 2900 5450 50  0001 C CNN
+F 3 "" H 2900 3800 50  0001 C CNN
+	1    2900 3800
+	1    0    0    -1  
+$EndComp
+Text Label 4450 5300 0    50   ~ 0
+D0
+Text Label 4450 5200 0    50   ~ 0
+D1
+Text Label 4450 5100 0    50   ~ 0
+D2
+Text Label 4450 5000 0    50   ~ 0
+D3
+Text Label 4450 4700 0    50   ~ 0
+D4
+Text Label 4450 4600 0    50   ~ 0
+D5
+Text Label 4450 4500 0    50   ~ 0
+D6
+Text Label 4450 4400 0    50   ~ 0
+D7
+Text Label 3900 5300 0    50   ~ 0
+CD0
+Text Label 3900 5200 0    50   ~ 0
+CD1
+Text Label 3900 5100 0    50   ~ 0
+CD2
+Text Label 3900 5000 0    50   ~ 0
+CD3
+Text Label 3900 4700 0    50   ~ 0
+CD4
+Text Label 3900 4600 0    50   ~ 0
+CD5
+Text Label 3900 4500 0    50   ~ 0
+CD6
+Text Label 3900 4400 0    50   ~ 0
+CD7
+Entry Wire Line
+	4600 5300 4700 5400
+Entry Wire Line
+	4600 5200 4700 5300
+Entry Wire Line
+	4600 5100 4700 5200
+Entry Wire Line
+	4600 5000 4700 5100
+Entry Wire Line
+	4600 4700 4700 4800
+Entry Wire Line
+	4600 4600 4700 4700
+Entry Wire Line
+	4600 4500 4700 4600
+Entry Wire Line
+	4600 4400 4700 4500
+Entry Wire Line
+	3800 5200 3900 5300
+Entry Wire Line
+	3800 5100 3900 5200
+Entry Wire Line
+	3800 5000 3900 5100
+Entry Wire Line
+	3800 4900 3900 5000
+$Comp
+L KungFuSID-rescue:R_Pack04-Device RN2
+U 1 1 5DA6909D
+P 4250 5200
+F 0 "RN2" V 3950 5200 50  0000 C CNN
+F 1 "100R" V 4450 5200 50  0000 C CNN
+F 2 "Resistor_SMD:R_Array_Concave_4x0402" V 4525 5200 50  0001 C CNN
+F 3 "~" H 4250 5200 50  0001 C CNN
+	1    4250 5200
+	0    1    1    0   
+$EndComp
+Entry Wire Line
+	3800 4600 3900 4700
+Entry Wire Line
+	3800 4500 3900 4600
+Entry Wire Line
+	3800 4400 3900 4500
+Entry Wire Line
+	3800 4300 3900 4400
+$Comp
+L KungFuSID-rescue:R_Pack04-Device RN1
+U 1 1 5DA66EB2
+P 4250 4600
+F 0 "RN1" V 3950 4600 50  0000 C CNN
+F 1 "100R" V 4450 4600 50  0000 C CNN
+F 2 "Resistor_SMD:R_Array_Concave_4x0402" V 4525 4600 50  0001 C CNN
+F 3 "~" H 4250 4600 50  0001 C CNN
+	1    4250 4600
+	0    1    1    0   
+$EndComp
+Text Label 2250 3100 2    50   ~ 0
+A0
+$Comp
+L KungFuSID-rescue:R-Device R4
+U 1 1 64C08D84
+P 5600 1500
+F 0 "R4" V 5500 1500 50  0000 C CNN
+F 1 "100" V 5700 1500 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 5530 1500 50  0001 C CNN
+F 3 "~" H 5600 1500 50  0001 C CNN
+	1    5600 1500
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:R-Device R10
+U 1 1 64C45632
+P 10350 2050
+F 0 "R10" V 10250 2050 50  0000 C CNN
+F 1 "2k" V 10450 2050 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 10280 2050 50  0001 C CNN
+F 3 "~" H 10350 2050 50  0001 C CNN
+	1    10350 2050
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:R-Device R8
+U 1 1 64C4FDFF
+P 9700 2300
+F 0 "R8" V 9600 2300 50  0000 C CNN
+F 1 "1k" V 9800 2300 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 9630 2300 50  0001 C CNN
+F 3 "~" H 9700 2300 50  0001 C CNN
+	1    9700 2300
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:R-Device R9
+U 1 1 64C5A194
+P 10100 2500
+F 0 "R9" V 10000 2500 50  0000 C CNN
+F 1 "470" V 10200 2500 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 10030 2500 50  0001 C CNN
+F 3 "~" H 10100 2500 50  0001 C CNN
+	1    10100 2500
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR014
+U 1 1 64CEE51A
+P 10450 2550
+F 0 "#PWR014" H 10450 2300 50  0001 C CNN
+F 1 "GND-power" H 10455 2377 50  0000 C CNN
+F 2 "" H 10450 2550 50  0001 C CNN
+F 3 "" H 10450 2550 50  0001 C CNN
+	1    10450 2550
+	1    0    0    -1  
+$EndComp
+Text Label 9200 2350 2    50   ~ 0
+VDD
+$Comp
+L KungFuSID-rescue:R-Device R7
+U 1 1 64C63FAD
+P 9400 2500
+F 0 "R7" V 9300 2500 50  0000 C CNN
+F 1 "470" V 9500 2500 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 9330 2500 50  0001 C CNN
+F 3 "~" H 9400 2500 50  0001 C CNN
+	1    9400 2500
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR013
+U 1 1 64DC65E7
+P 10000 1850
+F 0 "#PWR013" H 10000 1600 50  0001 C CNN
+F 1 "GND-power" H 10005 1677 50  0000 C CNN
+F 2 "" H 10000 1850 50  0001 C CNN
+F 3 "" H 10000 1850 50  0001 C CNN
+	1    10000 1850
+	1    0    0    -1  
+$EndComp
+Text Label 4250 2050 2    50   ~ 0
+VDD_ADC
+Text Label 3950 2200 0    50   ~ 0
+EXT_IN
+Entry Wire Line
+	3900 2050 3800 1950
+Entry Wire Line
+	3800 2900 3700 2800
+Entry Wire Line
+	3800 2800 3700 2700
+Text Label 3550 2700 0    50   ~ 0
+POT_X
+Entry Wire Line
+	3900 2200 3800 2100
+Text Label 3550 2800 0    50   ~ 0
+POT_Y
+Entry Wire Line
+	8850 2200 8950 2300
+Wire Wire Line
+	2100 2900 2250 2900
+Wire Wire Line
+	3700 2900 3550 2900
+Wire Wire Line
+	3700 3000 3550 3000
+Wire Wire Line
+	3700 3100 3550 3100
+Wire Wire Line
+	3700 3200 3550 3200
+Wire Wire Line
+	3700 3300 3550 3300
+Wire Wire Line
+	3700 3400 3550 3400
+Wire Wire Line
+	3700 3500 3550 3500
+Wire Wire Line
+	3700 3600 3550 3600
+Wire Wire Line
+	2100 3500 2250 3500
+Wire Wire Line
+	2250 3400 2100 3400
+Wire Wire Line
+	2100 3300 2250 3300
+Wire Wire Line
+	2250 3200 2100 3200
+Connection ~ 6850 5500
+Wire Bus Line
+	6850 5500 8950 5500
+Wire Wire Line
+	8600 1800 8750 1800
+Wire Wire Line
+	8600 2100 8850 2100
+Wire Wire Line
+	8600 2200 8850 2200
+Wire Wire Line
+	8600 3300 8850 3300
+Wire Wire Line
+	8600 3500 8850 3500
+Wire Wire Line
+	8600 3600 8850 3600
+Wire Wire Line
+	6950 3900 7200 3900
+Wire Wire Line
+	6950 3800 7200 3800
+Wire Wire Line
+	6950 3700 7200 3700
+Wire Wire Line
+	6950 3600 7200 3600
+Wire Wire Line
+	6950 3500 7200 3500
+Wire Wire Line
+	6950 3400 7200 3400
+Wire Wire Line
+	6950 3300 7200 3300
+Wire Wire Line
+	6950 3200 7200 3200
+Wire Wire Line
+	8600 3400 8850 3400
+Wire Wire Line
+	6850 1050 6900 1050
+Wire Wire Line
+	6400 1050 6550 1050
+Wire Wire Line
+	5800 2200 5400 2200
+Wire Wire Line
+	5400 2200 5400 3100
+Wire Wire Line
+	5400 3100 5600 3100
+Connection ~ 5600 3100
+Wire Wire Line
+	5600 3100 5800 3100
+Wire Wire Line
+	6950 2500 6950 2700
+Wire Wire Line
+	6950 2700 7200 2700
+Wire Wire Line
+	5600 3100 5600 3150
+Wire Wire Line
+	8600 3200 8850 3200
+Wire Wire Line
+	8600 2800 9100 2800
+Wire Wire Line
+	6900 1700 6900 1050
+Wire Wire Line
+	6900 1700 7200 1700
+Wire Wire Line
+	5950 4450 5950 4500
+Wire Wire Line
+	5950 4500 6000 4500
+Wire Wire Line
+	6300 4500 6400 4500
+Wire Wire Line
+	8600 2900 9100 2900
+Wire Wire Line
+	2450 6200 2650 6200
+Wire Wire Line
+	1650 6550 2150 6550
+Wire Wire Line
+	2150 6500 2150 6550
+Wire Wire Line
+	1650 6150 1650 6200
+Wire Wire Line
+	1850 6200 1650 6200
+Wire Wire Line
+	6500 1750 6400 1750
+Wire Wire Line
+	6400 1750 6400 2150
+Wire Wire Line
+	6400 2150 6500 2150
+Connection ~ 6400 2150
+Wire Wire Line
+	6400 2150 6400 2200
+Wire Wire Line
+	6800 1750 6800 1900
+Wire Wire Line
+	6800 1900 7200 1900
+Wire Wire Line
+	7200 2000 6800 2000
+Wire Wire Line
+	6800 2000 6800 2150
+Connection ~ 2650 6200
+Wire Wire Line
+	5800 2500 6950 2500
+Wire Wire Line
+	5800 2800 7200 2800
+Wire Wire Line
+	2650 6200 2650 6150
+Wire Wire Line
+	7800 4900 7900 4900
+Wire Wire Line
+	7700 1300 7800 1300
+Wire Wire Line
+	2650 6150 3050 6150
+Wire Wire Line
+	2150 6550 2650 6550
+Wire Wire Line
+	5750 1500 7200 1500
+Wire Wire Line
+	4450 5300 4600 5300
+Wire Wire Line
+	4450 5200 4600 5200
+Wire Wire Line
+	4450 5100 4600 5100
+Wire Wire Line
+	4450 5000 4600 5000
+Wire Wire Line
+	4450 4700 4600 4700
+Wire Wire Line
+	4450 4600 4600 4600
+Wire Wire Line
+	4450 4500 4600 4500
+Wire Wire Line
+	4450 4400 4600 4400
+Wire Wire Line
+	3900 5300 4050 5300
+Wire Wire Line
+	3900 5200 4050 5200
+Wire Wire Line
+	3900 5100 4050 5100
+Wire Wire Line
+	3900 5000 4050 5000
+Wire Wire Line
+	3900 4700 4050 4700
+Wire Wire Line
+	3900 4600 4050 4600
+Wire Wire Line
+	3900 4500 4050 4500
+Wire Wire Line
+	3900 4400 4050 4400
+Connection ~ 4700 5500
+Wire Bus Line
+	4700 5500 6850 5500
+Connection ~ 5800 2500
+Connection ~ 5800 2800
+Connection ~ 7800 1300
+Wire Wire Line
+	7800 1300 7900 1300
+Connection ~ 7900 1300
+Wire Wire Line
+	7900 1300 7950 1300
+Connection ~ 7900 4900
+Wire Wire Line
+	7900 4900 8000 4900
+Connection ~ 7950 1300
+Wire Wire Line
+	7950 1300 8000 1300
+Connection ~ 8000 1300
+Wire Wire Line
+	8000 1300 8100 1300
+Connection ~ 8100 1300
+Wire Wire Line
+	8100 1300 8200 1300
+Wire Wire Line
+	2100 3100 2250 3100
+Wire Bus Line
+	2000 5500 4700 5500
+Wire Wire Line
+	6700 4500 7200 4500
+Wire Wire Line
+	5450 1500 2100 1500
+Wire Wire Line
+	2100 1500 2100 2700
+Wire Wire Line
+	2100 2700 2250 2700
+Wire Wire Line
+	9800 1450 9150 1450
+Wire Wire Line
+	10400 1550 10600 1550
+Wire Wire Line
+	10600 1550 10600 2050
+Wire Wire Line
+	10600 2050 10500 2050
+Wire Wire Line
+	9700 2050 9700 1650
+Wire Wire Line
+	9700 1650 9800 1650
+Wire Wire Line
+	9700 2150 9700 2050
+Wire Wire Line
+	9950 2500 9700 2500
+Connection ~ 9700 2050
+Wire Wire Line
+	9700 2050 10200 2050
+Wire Wire Line
+	9700 2450 9700 2500
+Connection ~ 9700 2500
+Wire Wire Line
+	9700 2500 9550 2500
+Wire Wire Line
+	10250 2500 10450 2500
+Wire Wire Line
+	10450 2500 10450 2550
+Wire Bus Line
+	3800 1800 2000 1800
+Wire Wire Line
+	3550 2700 3700 2700
+Wire Wire Line
+	3550 2800 3700 2800
+Wire Wire Line
+	9250 2350 9050 2350
+Text Label 2100 2900 0    50   ~ 0
+R~W
+Entry Wire Line
+	8850 3700 8950 3800
+Entry Wire Line
+	8850 3600 8950 3700
+Text Label 8600 3700 0    50   ~ 0
+~CS
+Wire Wire Line
+	8600 3700 8850 3700
+Entry Wire Line
+	9050 2350 8950 2450
+Wire Wire Line
+	8600 1500 8850 1500
+Text Label 8600 1500 0    50   ~ 0
+R~W
+Entry Wire Line
+	8850 1500 8950 1600
+Entry Wire Line
+	2000 3100 2100 3000
+Wire Wire Line
+	2100 3000 2250 3000
+Text Label 2100 3000 0    50   ~ 0
+~CS
+Wire Wire Line
+	10600 1550 10750 1550
+Wire Wire Line
+	10750 1550 10750 1200
+Wire Wire Line
+	3650 1200 3650 2400
+Wire Wire Line
+	3550 2400 3650 2400
+Connection ~ 10600 1550
+$Comp
+L KungFuSID-rescue:+5V-power #PWR05
+U 1 1 6498B50C
+P 4000 2600
+F 0 "#PWR05" H 4000 2450 50  0001 C CNN
+F 1 "+5V-power" H 4015 2773 50  0000 C CNN
+F 2 "" H 4000 2600 50  0001 C CNN
+F 3 "" H 4000 2600 50  0001 C CNN
+	1    4000 2600
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:R-Device R2
+U 1 1 649A10EA
+P 4500 2300
+F 0 "R2" V 4400 2300 50  0000 C CNN
+F 1 "6.2k" V 4600 2300 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 4430 2300 50  0001 C CNN
+F 3 "~" H 4500 2300 50  0001 C CNN
+	1    4500 2300
+	0    1    1    0   
+$EndComp
+$Comp
+L KungFuSID-rescue:R-Device R3
+U 1 1 649A87F4
+P 4750 2550
+F 0 "R3" V 4650 2550 50  0000 C CNN
+F 1 "1.2k" V 4850 2550 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 4680 2550 50  0001 C CNN
+F 3 "~" H 4750 2550 50  0001 C CNN
+	1    4750 2550
+	1    0    0    -1  
+$EndComp
+$Comp
+L KungFuSID-rescue:GND-power #PWR06
+U 1 1 649D2392
+P 4750 2750
+F 0 "#PWR06" H 4750 2500 50  0001 C CNN
+F 1 "GND-power" H 4755 2577 50  0000 C CNN
+F 2 "" H 4750 2750 50  0001 C CNN
+F 3 "" H 4750 2750 50  0001 C CNN
+	1    4750 2750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4650 2300 4750 2300
+Wire Wire Line
+	4750 2300 4750 2400
+Wire Wire Line
+	4750 2750 4750 2700
+Wire Wire Line
+	4750 2300 5000 2300
+Wire Wire Line
+	5000 2300 5000 2050
+Wire Wire Line
+	5000 2050 3900 2050
+Connection ~ 4750 2300
+Entry Wire Line
+	8850 1900 8950 2000
+Text Label 8600 1900 0    50   ~ 0
+VDD_ADC
+Wire Wire Line
+	8600 1900 8850 1900
+Wire Wire Line
+	8600 2000 8900 2000
+Wire Wire Line
+	8900 2000 8900 2100
+Wire Wire Line
+	8900 2100 9150 2100
+Wire Wire Line
+	9150 1450 9150 2100
+Text Label 3700 2300 2    50   ~ 0
+VDD
+Entry Wire Line
+	3800 2200 3700 2300
+Wire Wire Line
+	10000 1050 9250 1050
+Wire Wire Line
+	9250 1050 9250 2350
+Wire Wire Line
+	10000 1050 10000 1250
+Wire Wire Line
+	9250 2500 9250 2350
+Connection ~ 9250 2350
+Connection ~ 2150 6550
+Wire Wire Line
+	2150 6550 2150 6600
+Wire Wire Line
+	2650 6500 2650 6550
+Connection ~ 2650 6550
+Wire Wire Line
+	2650 6550 3050 6550
+Wire Wire Line
+	3050 6500 3050 6550
+Connection ~ 3050 6550
+Wire Wire Line
+	3050 6550 3450 6550
+Wire Wire Line
+	3450 6500 3450 6550
+Connection ~ 3450 6550
+Wire Wire Line
+	3450 6550 3850 6550
+Wire Wire Line
+	3850 6500 3850 6550
+Connection ~ 3850 6550
+Wire Wire Line
+	3850 6550 4250 6550
+Wire Wire Line
+	4250 6500 4250 6550
+Connection ~ 4250 6550
+Wire Wire Line
+	4250 6550 4650 6550
+Wire Wire Line
+	4650 6500 4650 6550
+Connection ~ 4650 6550
+Wire Wire Line
+	4650 6550 5050 6550
+Wire Wire Line
+	5050 6500 5050 6550
+Connection ~ 5050 6550
+Wire Wire Line
+	5050 6550 5450 6550
+Wire Wire Line
+	5450 6500 5450 6550
+Connection ~ 2650 6150
+Wire Wire Line
+	1650 6200 1650 6250
+Connection ~ 1650 6200
+Wire Wire Line
+	3050 6200 3050 6150
+Connection ~ 3050 6150
+Wire Wire Line
+	3050 6150 3450 6150
+Wire Wire Line
+	3450 6200 3450 6150
+Connection ~ 3450 6150
+Wire Wire Line
+	3450 6150 3850 6150
+Wire Wire Line
+	3850 6200 3850 6150
+Connection ~ 3850 6150
+Wire Wire Line
+	3850 6150 4250 6150
+Wire Wire Line
+	4250 6200 4250 6150
+Connection ~ 4250 6150
+Wire Wire Line
+	4250 6150 4650 6150
+Wire Wire Line
+	4650 6200 4650 6150
+Connection ~ 4650 6150
+Wire Wire Line
+	4650 6150 5050 6150
+Wire Wire Line
+	5050 6200 5050 6150
+Connection ~ 5050 6150
+Wire Wire Line
+	5050 6150 5450 6150
+Wire Wire Line
+	5450 6200 5450 6150
+$Comp
+L KungFuSID-rescue:D-Device D2
+U 1 1 6477909C
+P 8600 1100
+F 0 "D2" H 8600 1316 50  0000 C CNN
+F 1 "1N4148WS" H 8600 1225 50  0000 C CNN
+F 2 "Diode_SMD:D_SOD-323" H 8600 1100 50  0001 C CNN
+F 3 "" H 8600 1100 50  0001 C CNN
+	1    8600 1100
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	2000 2900 2100 2800
+Wire Wire Line
+	2100 2800 2250 2800
+Text Label 2100 2800 0    50   ~ 0
+PHI2
+Text Label 8600 2300 0    50   ~ 0
+PHI2
+Wire Wire Line
+	8600 2300 8850 2300
+Entry Wire Line
+	8850 2300 8950 2400
+Wire Wire Line
+	8750 1800 8750 1100
+Connection ~ 8750 1800
+Wire Wire Line
+	8750 1800 8850 1800
+Wire Wire Line
+	8450 1100 8100 1100
+Wire Wire Line
+	8100 1100 8100 1300
+Wire Wire Line
+	3550 2300 4350 2300
+$Comp
+L KungFuSID-rescue:R-Device R1
+U 1 1 647B2690
+P 4100 2900
+F 0 "R1" V 4000 2900 50  0000 C CNN
+F 1 "100" V 4200 2900 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" V 4030 2900 50  0001 C CNN
+F 3 "~" H 4100 2900 50  0001 C CNN
+	1    4100 2900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3550 2600 4000 2600
+Wire Wire Line
+	3900 2200 4100 2200
+Wire Wire Line
+	4100 2200 4100 2750
+Wire Wire Line
+	4100 3050 3850 3050
+Wire Wire Line
+	3850 3050 3850 2500
+Wire Wire Line
+	3550 2500 3850 2500
+Wire Wire Line
+	3650 1200 10750 1200
+Wire Bus Line
+	3800 1800 3800 2900
+Wire Bus Line
+	2000 1800 2000 5500
+Wire Bus Line
+	4700 4500 4700 5500
+Wire Bus Line
+	6850 3300 6850 5500
+Wire Bus Line
+	3800 3000 3800 5200
+Wire Bus Line
+	8950 1600 8950 5500
+$Comp
+L Amplifier_Operational:LM321 U4
+U 1 1 6482D268
+P 10100 1550
+F 0 "U4" H 10444 1596 50  0000 L CNN
+F 1 "LM321" H 10444 1505 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23-5" H 10100 1550 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/lm321.pdf" H 10100 1550 50  0001 C CNN
+	1    10100 1550
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC

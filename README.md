@@ -1,26 +1,24 @@
 # Kung Fu SID GD32 version
 
-IMPORTANT! Firmware is adjusted for new Kung Fu SID hardware 
+![Usage with MixSID on C64](pics/kfsid_units.jpg)
+
+IMPORTANT! Firmware is adjusted for new Kung Fu SID hardware (and only)
 
 A firmware for Kung Fu Flash and Kung Fu Flash GD32 which emulates SID via internal DAC of STM32F405RGT6
-Kung Fu SID is a future firmware for "UltiSID":
-
-https://github.com/Sgw32/UltiSID
-
+All hardware files are copied from "UltiSID" , projects are merged. 
 Original UltiSID firmware is obsolete and current Kung Fu SID firmware just is partly based on it in IRQ and SID emulation. 
 
 You can test Kung Fu SID by compiling firmware and flashing to your kung fu flash. 
 
+To use it with original KungFuFlash cartridge output - check previous commits. 
+Now only KungFuSID hardware is supported(and devices are selling)
 
-Here you can have the sound:
-
-![Kung Fu Flash PCB and sound location](pics/pcb_rev1.jpg)
-
-Just attach it using wire to pin 27 of SID(6581/8580). A sound is a bit silent but in final hardware it will work. 
+Example usage with MixSIDs (you can use it directly, of course)
+![Usage with MixSID on C64](pics/kfsid_mixsid.jpg)
 
 Patched by avrem for GD32F405RGT6 microcontroller.
 Patch includes:
 * ARR timer fix for GD32
 * Memory remap fix (since KFF is running from RAM)
 
-GD32 is more available than official STM32 making it better and cheaper for use. 
+You can use both GD32 or STM32. 

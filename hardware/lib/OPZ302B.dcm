@@ -1,0 +1,15 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP OPA188xxDBV
+D Zero-Drift, Precision, Low-Noise, Rail-to-Rail Output, 36-V Operational Amplifier, TSOT-23-5
+K single opamp zero-drift
+F http://www.ti.com/lit/ds/symlink/opa188.pdf
+$ENDCMP
+#
+$CMP OPZ302B
+D 5V, High-Precision, Ultra-Low-Power Operational Amplifier, TSOT-23-5
+K single opamp
+F https://datasheet.lcsc.com/lcsc/2302211801_analogysemi-OPZ302BSOT235_C5359435.pdf
+$ENDCMP
+#
+#End Doc Library
