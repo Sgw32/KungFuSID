@@ -6,10 +6,7 @@ export version
 ######################################
 # target
 ######################################
-TARGET = KungFuFlash_v$(version)
-
-LAUNCHER_DIR = ../launcher/
-LAUNCHER = $(LAUNCHER_DIR)build/KungFuLauncher_v$(version).bin
+TARGET = KungFuSID_v$(version)
 
 ######################################
 # building variables
@@ -151,9 +148,6 @@ $(BUILD_DIR)/$(TARGET)_all.bin: $(BUILD_DIR)/$(TARGET).bin | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $@
 
-$(LAUNCHER): $(wildcard $(LAUNCHER_DIR)*)
-	$(MAKE) -C $(LAUNCHER_DIR)
-
 #######################################
 # Debug
 #######################################
@@ -175,7 +169,6 @@ mem: $(BUILD_DIR)/$(TARGET)_mem.bin
 #######################################
 clean:
 	-rm -fR $(BUILD_DIR)
-	-$(MAKE) -C $(LAUNCHER_DIR) clean
 
 #######################################
 # dependencies

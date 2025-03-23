@@ -1,0 +1,43 @@
+name: KungFuSID Build
+
+on:
+  push:
+    branches:
+      - main  # Trigger this workflow on push to the main branch
+      - master  # Trigger this workflow on push to the master branch
+      - dev  # Trigger this workflow on push to the dev branch
+  pull_request:
+    branches:
+      - main  # Trigger this workflow on PR to the main branch
+      - master  # Trigger this workflow on PR to the master branch
+      - dev  # Trigger this workflow on PR to the dev branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the repository
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    # Step 2: Set up ARM toolchain (GNU Arm Embedded Toolchain)
+    - name: Set up ARM toolchain
+      run: |
+        sudo apt update
+        sudo apt install -y gcc-arm-none-eabi
+
+    # Step 3: Navigate to the firmware directory and run make
+    - name: Build KungFuSID Firmware
+      run: |
+        cd firmware
+        make
+
+    # Step 4: Check if the build was successful
+    - name: Verify build success
+      run: |
+        if [ ! -f firmware/build/*.bin ]; then
+          echo "Build failed: No .bin file found in the firmware/build/ folder!"
+          exit 1
+        fi
+        echo "Build successful!"
