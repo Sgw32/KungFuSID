@@ -32,13 +32,11 @@ You can use both GD32 or STM32.
 
 ## Future plans
 
-STM32F103 has a very long delay between CS fall down and interrupt routine begin - about 200ns. With a 500 ns window at all. 
-I plan migrating to STM32F405RCT6(still, very cheap on Aliexpress) my PCB also supports it. Also, I should optimize RW&CS routines to enhance performance.
+I need to finish paddles, 6581-8580 switch and make a bootloader(optional, though). Probably, that's it and project will be finished. 
+Some tunes still require some improvements, e.g. Artillery Credits by Geir Tjelta
 
 ## Limitations
 
-* ADSR attack works somewhat slow
-* Data readings are not correct at event-intensive tunes(where there are a lot of write-to-SID activities)
 * No 6581/8580 switch
 * No paddles(can be done though)
 
