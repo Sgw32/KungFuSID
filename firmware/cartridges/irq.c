@@ -433,72 +433,48 @@ FORCE_INLINE void SID_emulator ()
     ///////////////////////////////////////////////
     /////////////////////////////////////////////////// FILTERS redirect to filtered or unfiltered output
 
-    FILTER_Enable_switch =  SID[23]&0xF;
+    // Lookup tables for Volume_filtered and Volume_unfiltered
+    const uint8_t Volume_filtered_LUT[8] = {
+      0,                      // case 0x0
+      Volume_1,               // case 0x1
+      Volume_2,               // case 0x2
+      Volume_1 + Volume_2,    // case 0x3
+      Volume_3,               // case 0x4
+      Volume_1 + Volume_3,    // case 0x5
+      Volume_2 + Volume_3,    // case 0x6
+      Volume_1 + Volume_2 + Volume_3 // case 0x7
+    };
 
-    switch (FILTER_Enable_switch) {
-      default:
-      case 0x0:
-        Volume_filtered = 0;
-        if (OFF3 )
-        { // voice3 is not muted if passed thrue filter
-          Volume_unfiltered = Volume_1 + Volume_2;
-        }
-        else {
-          Volume_unfiltered = Volume_1 + Volume_2 + Volume_3 ;
-        }
-        break;
-      case 0x1:
-        Volume_filtered = Volume_1;
-        if (OFF3 )
-        { // voice3 is not muted if passed thrue filter
-          Volume_unfiltered =  Volume_2;
-        }
-        else
-        {
-          Volume_unfiltered = Volume_2 + Volume_3 ;
-        }
-        break;
-      case 0x2:
-        Volume_filtered = Volume_2;
-        if (OFF3 )
-        { // voice3 is not muted if passed thrue filter
-          Volume_unfiltered = Volume_1  ;
-        }
-        else
-        {
-          Volume_unfiltered = Volume_1 + Volume_3 ;
-        }
-        break;
-      case 0x3:
-        Volume_filtered = Volume_1 + Volume_2;
-        if (OFF3 )
-        { // voice3 is not muted if passed thrue filter
-          Volume_unfiltered = 0 ;
-        }
-        else
-        {
-          Volume_unfiltered = Volume_3 ;
-        }
-        break;
-      case 0x4: // voice3 is included, no matter the state of OFF3
-        Volume_filtered = Volume_3;
-        Volume_unfiltered = Volume_1 + Volume_2 ;
-        break;
-      case 0x5:
-        Volume_filtered = Volume_1 + Volume_3;
-        Volume_unfiltered = Volume_2 ;
-        break;
-      case 0x6:
-        Volume_filtered = Volume_2 + Volume_3;
-        Volume_unfiltered = Volume_1 ;
-        break;
-      case 0x7:
-        Volume_filtered = Volume_1 + Volume_2 + Volume_3;
-        Volume_unfiltered = 0;
-        break;
-    }
+    // Lookup table for unfiltered volume when OFF3 is OFF
+    const uint8_t Volume_unfiltered_OFF3_LUT[8] = {
+      Volume_1 + Volume_2 + Volume_3,  // case 0x0
+      Volume_2 + Volume_3,  // case 0x1
+      Volume_1 + Volume_3,  // case 0x2
+      Volume_3,             // case 0x3
+      Volume_1 + Volume_2,  // case 0x4
+      Volume_2,             // case 0x5
+      Volume_1,             // case 0x6
+      0                      // case 0x7
+    };
+
+    // Lookup table for unfiltered volume when OFF3 is ON
+    const uint8_t Volume_unfiltered_ON3_LUT[8] = {
+      Volume_1 + Volume_2,  // case 0x0
+      Volume_2,             // case 0x1
+      Volume_1,             // case 0x2
+      0,                    // case 0x3
+      Volume_1 + Volume_2,  // case 0x4
+      Volume_2,             // case 0x5
+      Volume_1,             // case 0x6
+      0                      // case 0x7
+    };
+
+    FILTER_Enable_switch = SID[23] & 0xF;
+    Volume_filtered = Volume_filtered_LUT[FILTER_Enable_switch];
+    Volume_unfiltered = OFF3 ? Volume_unfiltered_ON3_LUT[FILTER_Enable_switch] : Volume_unfiltered_OFF3_LUT[FILTER_Enable_switch];
+    
     Volume_filter_input = Volume_filtered;
-    Volume_filter_output = Volume_filtered; // in case filters are skipped
+    Volume_filter_output = Volume_filtered;  // in case filters are skipped
 
 #ifdef USE_FILTERS
     Volume_filter_input = (int32_t)(Volume_filter_input) >> 7; // lower it to 13bit

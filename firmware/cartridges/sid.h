@@ -540,6 +540,7 @@ uint32_t temp13;
 
 // internal SID registers
 uint8_t FILTER_Enable_switch = 0;
+
 // ADSR
 
 // values for attack and decay/release
