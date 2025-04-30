@@ -23,7 +23,7 @@ void error_open_folder(void)
  * @param addr 
  * @param value 
  */
-void setreg(uint32_t addr,uint32_t value)
+void setreg(uint8_t addr,uint8_t value)
 {
     SID[addr] = value;
 
@@ -240,7 +240,7 @@ FORCE_INLINE void SID_emulator ()
         WaveformDA_1 = 0;
         break;
       case 0b00010000:
-        WaveformDA_triangle_1 = ((  B2047_MSB ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
         WaveformDA_1 = WaveformDA_triangle_1;
         break;
       case 0b00100000:
@@ -248,7 +248,7 @@ FORCE_INLINE void SID_emulator ()
         WaveformDA_1 = WaveformDA_sawtooth_1;
         break;
       case 0b00110000:
-        WaveformDA_triangle_1 = ((  B2047_MSB ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
         WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
         WaveformDA_1 = AND_mask[(WaveformDA_triangle_1 & WaveformDA_sawtooth_1)] << 4; // combined waveform. AND-ed value is take from array (array is actually combined waveform of sawtooth and pulse of 0 value (maximum DC) )
         break;
@@ -257,7 +257,7 @@ FORCE_INLINE void SID_emulator ()
         WaveformDA_1 = WaveformDA_pulse_1;
         break;
       case 0b01010000:
-        WaveformDA_triangle_1 = ((  B2047_MSB ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
         if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
         WaveformDA_1 = AND_mask[WaveformDA_triangle_1 & WaveformDA_pulse_1] << 4;
         break;
@@ -433,48 +433,72 @@ FORCE_INLINE void SID_emulator ()
     ///////////////////////////////////////////////
     /////////////////////////////////////////////////// FILTERS redirect to filtered or unfiltered output
 
-    // Lookup tables for Volume_filtered and Volume_unfiltered
-    const uint8_t Volume_filtered_LUT[8] = {
-      0,                      // case 0x0
-      Volume_1,               // case 0x1
-      Volume_2,               // case 0x2
-      Volume_1 + Volume_2,    // case 0x3
-      Volume_3,               // case 0x4
-      Volume_1 + Volume_3,    // case 0x5
-      Volume_2 + Volume_3,    // case 0x6
-      Volume_1 + Volume_2 + Volume_3 // case 0x7
-    };
+    FILTER_Enable_switch =  SID[23]&0xF;
 
-    // Lookup table for unfiltered volume when OFF3 is OFF
-    const uint8_t Volume_unfiltered_OFF3_LUT[8] = {
-      Volume_1 + Volume_2 + Volume_3,  // case 0x0
-      Volume_2 + Volume_3,  // case 0x1
-      Volume_1 + Volume_3,  // case 0x2
-      Volume_3,             // case 0x3
-      Volume_1 + Volume_2,  // case 0x4
-      Volume_2,             // case 0x5
-      Volume_1,             // case 0x6
-      0                      // case 0x7
-    };
-
-    // Lookup table for unfiltered volume when OFF3 is ON
-    const uint8_t Volume_unfiltered_ON3_LUT[8] = {
-      Volume_1 + Volume_2,  // case 0x0
-      Volume_2,             // case 0x1
-      Volume_1,             // case 0x2
-      0,                    // case 0x3
-      Volume_1 + Volume_2,  // case 0x4
-      Volume_2,             // case 0x5
-      Volume_1,             // case 0x6
-      0                      // case 0x7
-    };
-
-    FILTER_Enable_switch = SID[23] & 0xF;
-    Volume_filtered = Volume_filtered_LUT[FILTER_Enable_switch];
-    Volume_unfiltered = OFF3 ? Volume_unfiltered_ON3_LUT[FILTER_Enable_switch] : Volume_unfiltered_OFF3_LUT[FILTER_Enable_switch];
-    
+    switch (FILTER_Enable_switch) {
+      default:
+      case 0x0:
+        Volume_filtered = 0;
+        if (OFF3 )
+        { // voice3 is not muted if passed thrue filter
+          Volume_unfiltered = Volume_1 + Volume_2;
+        }
+        else {
+          Volume_unfiltered = Volume_1 + Volume_2 + Volume_3 ;
+        }
+        break;
+      case 0x1:
+        Volume_filtered = Volume_1;
+        if (OFF3 )
+        { // voice3 is not muted if passed thrue filter
+          Volume_unfiltered =  Volume_2;
+        }
+        else
+        {
+          Volume_unfiltered = Volume_2 + Volume_3 ;
+        }
+        break;
+      case 0x2:
+        Volume_filtered = Volume_2;
+        if (OFF3 )
+        { // voice3 is not muted if passed thrue filter
+          Volume_unfiltered = Volume_1  ;
+        }
+        else
+        {
+          Volume_unfiltered = Volume_1 + Volume_3 ;
+        }
+        break;
+      case 0x3:
+        Volume_filtered = Volume_1 + Volume_2;
+        if (OFF3 )
+        { // voice3 is not muted if passed thrue filter
+          Volume_unfiltered = 0 ;
+        }
+        else
+        {
+          Volume_unfiltered = Volume_3 ;
+        }
+        break;
+      case 0x4: // voice3 is included, no matter the state of OFF3
+        Volume_filtered = Volume_3;
+        Volume_unfiltered = Volume_1 + Volume_2 ;
+        break;
+      case 0x5:
+        Volume_filtered = Volume_1 + Volume_3;
+        Volume_unfiltered = Volume_2 ;
+        break;
+      case 0x6:
+        Volume_filtered = Volume_2 + Volume_3;
+        Volume_unfiltered = Volume_1 ;
+        break;
+      case 0x7:
+        Volume_filtered = Volume_1 + Volume_2 + Volume_3;
+        Volume_unfiltered = 0;
+        break;
+    }
     Volume_filter_input = Volume_filtered;
-    Volume_filter_output = Volume_filtered;  // in case filters are skipped
+    Volume_filter_output = Volume_filtered; // in case filters are skipped
 
 #ifdef USE_FILTERS
     Volume_filter_input = (int32_t)(Volume_filter_input) >> 7; // lower it to 13bit
