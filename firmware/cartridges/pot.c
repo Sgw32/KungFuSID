@@ -1,125 +1,111 @@
-#include "pot.h"
+#define POTX_PIN     6
+#define POTY_PIN     7
+#define POTX_MASK    (1 << POTX_PIN)
+#define POTY_MASK    (1 << POTY_PIN)
 
-static uint8_t potCycleCounter = 0;
-static uint8_t newPotCounter = 0;
-static uint8_t smoothPotValues = 0;
-static uint8_t newPotXCandidate = 128, newPotYCandidate = 128;
-static uint8_t newPotXCandidate2S = 128, newPotYCandidate2S = 128;
-static uint8_t skipSmoothing = 0;
-uint8_t skipMeasurements = 0;
-uint8_t outRegisters25 = 0;
-uint8_t outRegisters26 = 0;
-uint8_t paddleFilterMode = 0;
+// Global variables
+uint32_t potX_count = 0;
+uint32_t potY_count = 0;
+
+extern uint8_t POTX; // TODO
+extern uint8_t POTY; // TODO
+
+// Enum for measurement phases
+typedef enum {
+    PHASE_DISCHARGE = 0,
+    PHASE_PREPARE_CHARGE = 1,
+    PHASE_MEASURE_CHARGE = 2,
+    PHASE_FINISH_CYCLE = 3
+} PotMeasurementPhase;
+
+// Measurement state
+static PotMeasurementPhase pot_phase = PHASE_DISCHARGE;
+static uint32_t discharge_count = 0;
+static uint32_t measure_count = 0;
+
+// Helper macros
+#define SET_OUTPUT(pin)   (GPIOA->MODER = (GPIOA->MODER & ~(0x3 << ((pin)*2))) | (0x1 << ((pin)*2)))
+#define SET_INPUT(pin)    (GPIOA->MODER &= ~(0x3 << ((pin)*2)))
+#define WRITE_LOW(pin)    (GPIOA->ODR &= ~(1 << (pin)))
+#define READ_PIN(pin)     ((GPIOA->IDR >> (pin)) & 0x1)
+
 
 void pot_init(void)
 {
 
 }
 
-void pot_process(void)
+FORCE_INLINE void pot_process(void)
 {
-    if ( potCycleCounter == 0 )
+    switch (pot_phase)
     {
-        if ( newPotCounter & 4 )			// in phase 2?
-        {
-            gpioDir |= bPOTX | bPOTY;       // enter phase 1
-            newPotCounter = 0;
+        case PHASE_DISCHARGE:
+            // Discharge pins by driving low
+            SET_OUTPUT(POTX_PIN);
+            SET_OUTPUT(POTY_PIN);
+            WRITE_LOW(POTX_PIN);
+            WRITE_LOW(POTY_PIN);
 
-            if ( POT_OUTLIER_REJECTION > 1 )
+            // Count 255 discharge cycles
+            discharge_count+=multiplier;
+            if (discharge_count >= 255)
             {
-                #define GUARD 8
-                if ( ( newPotXCandidate < ( 64 - GUARD ) || newPotXCandidate > ( 192 + GUARD ) ) ||
-                        ( newPotYCandidate < ( 64 - GUARD ) || newPotYCandidate > ( 192 + GUARD ) ) )
-                    skipMeasurements = 2;
+                discharge_count = 0;
+                pot_phase = PHASE_PREPARE_CHARGE;
             }
+            break;
 
-            if ( skipMeasurements )
+        case PHASE_PREPARE_CHARGE:
+            // Set pins to input mode (start measuring charge time)
+            SET_INPUT(POTX_PIN);
+            SET_INPUT(POTY_PIN);
+
+            potX_count = 0;
+            potY_count = 0;
+            measure_count = 0;
+
+            pot_phase = PHASE_MEASURE_CHARGE;
+            break;
+
+        case PHASE_MEASURE_CHARGE:
+            // For 255 cycles, count how long each pin stays LOW
+            if (!READ_PIN(POTX_PIN) && potX_count < 255)
+                potX_count+=multiplier;
+            if (!READ_PIN(POTY_PIN) && potY_count < 255)
+                potY_count+=multiplier;
+            if ((READ_PIN(POTX_PIN) && READ_PIN(POTY_PIN)))
             {
-                skipMeasurements --;
-                skipSmoothing = 1;
-            } else
-            {
-                skipSmoothing = 0;
-
-                #define max( a, b ) ( (a)>(b)?(a):(b) )
-                #define min( a, b ) ( (a)<(b)?(a):(b) )
-                #ifdef DIAGROM_HACK
-                    if ( DIAGROM_THRESHOLD >= 80 )
-                    {
-                        if ( abs( newPotXCandidate - newPotYCandidate ) < 10 && newPotXCandidate >= 50 && newPotXCandidate < DIAGROM_THRESHOLD )
-                        {
-                            if ( presumablyFixedResistor < 40000 )
-                                presumablyFixedResistor ++;
-                        } else
-                        {
-                            if ( presumablyFixedResistor )
-                                presumablyFixedResistor --;
-                        }
-                        if ( presumablyFixedResistor > 1000 )
-                            diagROM_PaddleOffset = min( DIAGROM_THRESHOLD - newPotXCandidate, ( presumablyFixedResistor - 1000 ) / 1000 ); else
-                            diagROM_PaddleOffset = 0;
-                        newPotXCandidate = min( 255, (int)newPotXCandidate + (int)diagROM_PaddleOffset );
-                        newPotYCandidate = min( 255, (int)newPotYCandidate + (int)diagROM_PaddleOffset );
-                    } else
-                    if ( DIAGROM_THRESHOLD > 1 )
-                    {
-                        newPotXCandidate = min( 255, (int)newPotXCandidate + (int)DIAGROM_THRESHOLD );
-                        newPotYCandidate = min( 255, (int)newPotYCandidate + (int)DIAGROM_THRESHOLD );
-                    }
-                #endif
-
-                if ( !paddleFilterMode )
-                {
-                    outRegisters25 = newPotXCandidate;
-                    outRegisters26 = newPotYCandidate;
-                } else
-                if ( !smoothPotValues )
-                {
-                    newPotXCandidate2S = newPotXCandidate;
-                    newPotYCandidate2S = newPotYCandidate;
-                    smoothPotValues = 1;
-                }
+                pot_phase = PHASE_FINISH_CYCLE;
             }
-        } else
-        {
-            gpioDir &= ~( bPOTX | bPOTY );  // enter phase 2
-            newPotCounter = 0b111;
-        }
-    } else
-    if ( newPotCounter & 4 )				// in phase 2, but cycle counter != 0
-    {
-        if ( ( newPotCounter & 1 ) && ( ( g & bPOTX ) || potCycleCounter == 255 ) )
-        {
-            newPotXCandidate = potCycleCounter;
-            newPotCounter &= 0b110;
-        }
-
-        uint8_t potYState = 0;
-
-        if ( config[ 57 ] )
-            potYState = ( ( newPotCounter & 2 ) && ( ( (uint16_t)adc_hw->result > 1024 + config[ 57 ] * 64 ) || potCycleCounter == 255 ) ); else
-            potYState = ( ( newPotCounter & 2 ) && ( ( g & bPOTY ) || potCycleCounter == 255 ) );
-
-        if ( potYState )
-        {
-            newPotYCandidate = potCycleCounter;
-            newPotCounter &= 0b101;
-        } else
-
-        // test validity of measurements
-        if ( POT_OUTLIER_REJECTION )
-        {
-            uint8_t potYState = 0;
-
-            if ( config[ 57 ] )
-                potYState = ( !( newPotCounter & 2 ) && !( (uint16_t)adc_hw->result > 1024 + config[ 57 ] * 64 - 256 ) ); else
-                potYState = ( !( newPotCounter & 2 ) && !( ( g & bPOTY ) ) );
-
-            if ( ( !( newPotCounter & 1 ) && !( g & bPOTX ) && potCycleCounter == ( ( newPotXCandidate + 255 ) >> 1 ) ) ||
-                    ( potYState && potCycleCounter == ( ( newPotYCandidate + 255 ) >> 1 ) ) )
-                skipMeasurements = 2;
-        }
+            if (measure_count >= 255)
+            {
+                pot_phase = PHASE_DISCHARGE;
+            }
+            measure_count+=multiplier;
+            break;
+        case PHASE_FINISH_CYCLE:
+            SET_OUTPUT(POTX_PIN);
+            SET_OUTPUT(POTY_PIN);
+            WRITE_LOW(POTX_PIN);
+            WRITE_LOW(POTY_PIN);
+            if (measure_count >= 255)
+            {
+                pot_phase = PHASE_DISCHARGE;
+            }
+            measure_count+=multiplier;
+        default:
+            pot_phase = PHASE_DISCHARGE;
+            discharge_count = 0;
+            break;
     }
 
-    potCycleCounter ++;
+    if (potX_count<255)
+        POTX = potX_count;
+    else
+        POTX = 255;   
+    if (potY_count<255)
+        POTY = potY_count;
+    else
+        POTY = 255; 
+    // potX_count and potY_count hold the time-to-high in cycles 
 }
