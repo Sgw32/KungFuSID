@@ -163,6 +163,31 @@ void reset_SID()
   EnvelopeGenerator_reset(&gen3);
 }
 
+// Optimized 23-bit LFSR update used for noise generation. Implemented in
+// ARM assembly to reduce loop overhead inside the SID interrupt routine.
+static FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
+{
+    if (!count)
+    {
+        return;
+    }
+
+    uint32_t tmp;
+    __asm__ volatile (
+        "1:\n"
+        "lsr    %[t], %[s], #22\n"     /* bit 22 */
+        "eor    %[t], %[t], %[s], lsr #17\n"  /* bit 17 */
+        "ands   %[t], %[t], #1\n"       /* feedback bit */
+        "lsl    %[s], %[s], #1\n"       /* shift */
+        "orr    %[s], %[s], %[t]\n"     /* insert new bit */
+        "subs   %[c], %[c], #1\n"       /* decrement count */
+        "bne    1b\n"
+        : [s] "+r" (*state), [c] "+r" (count), [t] "=&r" (tmp)
+        :
+        : "cc"
+    );
+}
+
 /**
  * @brief Main emulator function which outputs to DAC
  * 
@@ -180,32 +205,20 @@ FORCE_INLINE void SID_emulator ()
     // noise_1
     OSC_noise_1 = OSC_noise_1 + multiplier * OSC_1_HiLo; // noise counter (
     OSC_bit19_1 = OSC_noise_1 >> 19 ; //  / 0x080000;// calculate how many missing rising edges of bit_19 since last irq (if any)
-    for (i = 0; i < OSC_bit19_1; i++) {
-      bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
-      pseudorandom_1 = pseudorandom_1 << 1;
-      pseudorandom_1 = bit_0_1 | pseudorandom_1;
-    }
+    lfsr_update(&pseudorandom_1, OSC_bit19_1);
     OSC_noise_1 = OSC_noise_1 - (OSC_bit19_1 << 19); // * 0x080000); // no reset, keep lower 18bit
 
 
     // noise_2
     OSC_noise_2 = OSC_noise_2 + multiplier * OSC_2_HiLo; // noise counter (
     OSC_bit19_2 = OSC_noise_2 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-    for (i = 0; i < OSC_bit19_2; i++) {
-      bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
-      pseudorandom_2 = pseudorandom_2 << 1;
-      pseudorandom_2 = bit_0_2 | pseudorandom_2;
-    }
+    lfsr_update(&pseudorandom_2, OSC_bit19_2);
     OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
 
     // noise_3
     OSC_noise_3 = OSC_noise_3 + multiplier * OSC_3_HiLo; // noise counter (
     OSC_bit19_3 = OSC_noise_3 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-    for (i = 0; i < OSC_bit19_3; i++) {
-      bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
-      pseudorandom_3 = pseudorandom_3 << 1;
-      pseudorandom_3 = bit_0_3 | pseudorandom_3;
-    }
+    lfsr_update(&pseudorandom_3, OSC_bit19_3);
     OSC_noise_3 = OSC_noise_3 - (OSC_bit19_3 << 19 ); //  * 0x080000); // no reset, keep lower 18bit
 
 
