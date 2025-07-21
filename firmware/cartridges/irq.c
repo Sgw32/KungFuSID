@@ -188,6 +188,44 @@ static FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
     );
 }
 
+// Optimized version of the filter integrator loop. The original C version
+// performs multiple multiplications and branches for each iteration. By using
+// ARM assembly we reduce register spills and conditional logic overhead.
+static FORCE_INLINE void filter_update_asm(uint32_t delta)
+{
+    uint32_t dt_flt = FILTER_SENSITIVITY;
+    int32_t w0dt, dvbp, dvlp;
+
+    __asm__ volatile (
+        "cmp    %[d], #0\n"            /* anything to do?    */
+        "beq    2f\n"
+        "1:\n"
+        "cmp    %[d], %[f]\n"          /* clamp dt_flt       */
+        "movlo  %[f], %[d]\n"
+        "mul    %[w], %[wc], %[f]\n"   /* w0_ceil_dt * dt_flt */
+        "asr    %[w], %[w], #6\n"      /* >> 6               */
+        "mul    %[b], %[w], %[vh]\n"   /* dVbp = w0dt*Vhp    */
+        "asr    %[b], %[b], #14\n"
+        "mul    %[l], %[w], %[vb]\n"   /* dVlp = w0dt*Vbp    */
+        "asr    %[l], %[l], #14\n"
+        "sub    %[vb], %[vb], %[b]\n"  /* Vbp -= dVbp        */
+        "sub    %[vl], %[vl], %[l]\n"  /* Vlp -= dVlp        */
+        "mul    %[vh], %[vb], %[qd]\n" /* Vbp*Q_1024_div     */
+        "asr    %[vh], %[vh], #10\n"
+        "sub    %[vh], %[vh], %[vl]\n" /* -Vlp               */
+        "sub    %[vh], %[vh], %[in]\n" /* -Volume_input      */
+        "subs   %[d], %[d], %[f]\n"   /* delta -= dt_flt    */
+        "bne    1b\n"
+        "2:\n"
+        : [d] "+r" (delta), [f] "+r" (dt_flt),
+          [vb] "+r" (Vbp), [vl] "+r" (Vlp), [vh] "+r" (Vhp),
+          [w] "=&r" (w0dt), [b] "=&r" (dvbp), [l] "=&r" (dvlp)
+        : [wc] "r" (w0_ceil_dt), [qd] "r" (Q_1024_div),
+          [in] "r" (Volume_filter_input)
+        : "cc"
+    );
+}
+
 /**
  * @brief Main emulator function which outputs to DAC
  * 
@@ -525,31 +563,7 @@ FORCE_INLINE void SID_emulator ()
     delta_t = multiplier;
     delta_t_flt = FILTER_SENSITIVITY;
 
-    while (delta_t) {
-      if (delta_t < delta_t_flt) {
-        delta_t_flt = delta_t;
-      }
-      // reSID:
-      // delta_t is converted to seconds given a 1MHz clock by dividing
-      // with 1 000 000. This is done in two operations to avoid integer
-      // multiplication overflow.
-
-      // reSID:
-      //// Calculate filter outputs.
-      //// Vhp = Vbp/Q - Vlp - Vi;
-      //// dVbp = -w0*Vhp*dt;
-      //// dVlp = -w0*Vbp*dt;
-      w0_delta_t = ((int32_t)(w0_ceil_dt * delta_t_flt) >> 6);
-
-      dVbp = ((int32_t)(w0_delta_t*Vhp) >> 14);
-      dVlp = ((int32_t)(w0_delta_t*Vbp) >> 14);
-
-      Vbp -= dVbp;
-      Vlp -= dVlp;
-      Vhp = ((int32_t)(Vbp * (Q_1024_div)) >> 10) - Vlp - Volume_filter_input; // i am not sure is this order is good. Maybe Vhp is calculated first, before Vbp and Vlp?
-
-      delta_t -= delta_t_flt;
-    }
+    filter_update_asm(delta_t);
 
     Volume_filter_output = 0;
 
