@@ -611,9 +611,7 @@ uint16_t WaveformDA_triangle_1 = 0;
 uint16_t WaveformDA_sawtooth_1 = 0;
 uint16_t WaveformDA_pulse_1 = 0;
 uint32_t pseudorandom_1 =  0x7ffff8; //  for rnd
-uint32_t bit22_1 = 0;//
-uint32_t bit17_1 = 0;
-uint8_t bit_0_1 = 0;
+
 
 uint16_t WaveformDA_2 = 0; // 12bit Waveform DA
 uint16_t WaveformDA_noise_2 = 0;
@@ -621,9 +619,7 @@ uint16_t WaveformDA_triangle_2 = 0;
 uint16_t WaveformDA_sawtooth_2 = 0;
 uint16_t WaveformDA_pulse_2 = 0;
 uint32_t pseudorandom_2 =  0x7ffff8; //  for rnd
-uint32_t bit22_2 = 0;//
-uint32_t bit17_2 = 0;
-uint8_t bit_0_2 = 0;
+
 
 uint16_t WaveformDA_3 = 0; // 12bit Waveform DA
 uint16_t WaveformDA_noise_3 = 0;
@@ -631,9 +627,7 @@ uint16_t WaveformDA_triangle_3 = 0;
 uint16_t WaveformDA_sawtooth_3 = 0;
 uint16_t WaveformDA_pulse_3 = 0;
 uint32_t pseudorandom_3 =  0x7ffff8; //  for rnd
-uint32_t bit22_3 = 0;//
-uint32_t bit17_3 = 0;
-uint8_t bit_0_3 = 0;
+
 
 // initial setup for SID registers - can be used for testing or for sketch with only interrupt (with just SID emulator, and direct change registers)
 uint16_t PW_HiLo_voice_1 = 2048;  // 2048 = 50% initial test
