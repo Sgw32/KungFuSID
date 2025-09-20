@@ -175,9 +175,125 @@ void reset_SID()
   EnvelopeGenerator_reset(&gen3);
 }
 
+FORCE_INLINE uint32_t sid_noise_advance(uint32_t state, uint32_t steps, uint8_t *last_bit)
+{
+#if defined(__arm__) || defined(__thumb__)
+  uint32_t feedback = *last_bit;
+  uint32_t scratch;
+
+  __asm volatile (
+    "cmp %[steps], #0\n"
+    "beq 2f\n"
+    "1:\n"
+    "lsr %[feedback], %[state], #22\n"
+    "lsr %[scratch], %[state], #17\n"
+    "eor %[feedback], %[feedback], %[scratch]\n"
+    "ands %[feedback], %[feedback], #1\n"
+    "lsl %[state], %[state], #1\n"
+    "orr %[state], %[state], %[feedback]\n"
+    "subs %[steps], %[steps], #1\n"
+    "bne 1b\n"
+    "2:\n"
+    : [state] "+r" (state),
+      [steps] "+r" (steps),
+      [feedback] "+r" (feedback),
+      [scratch] "=&r" (scratch)
+    :
+    : "cc"
+  );
+
+  *last_bit = (uint8_t)feedback;
+  return state;
+#else
+  uint32_t feedback = *last_bit;
+
+  while (steps--) {
+    feedback = (((state >> 22) ^ (state >> 17)) & 0x1);
+    state = (state << 1) | feedback;
+  }
+
+  *last_bit = (uint8_t)feedback;
+  return state;
+#endif
+}
+
+FORCE_INLINE void sid_filter_iteration(int32_t *Vhp_ptr,
+                                       int32_t *Vbp_ptr,
+                                       int32_t *Vlp_ptr,
+                                       int32_t *w0_delta_t_ptr,
+                                       int32_t *dVbp_ptr,
+                                       int32_t *dVlp_ptr,
+                                       int32_t w0_ceil_dt_val,
+                                       int delta_t_step,
+                                       int32_t Q_1024_div_val,
+                                       int32_t volume_input)
+{
+#if defined(__arm__) || defined(__thumb__)
+  int32_t Vhp_val = *Vhp_ptr;
+  int32_t Vbp_val = *Vbp_ptr;
+  int32_t Vlp_val = *Vlp_ptr;
+  int32_t w0_delta_val = *w0_delta_t_ptr;
+  int32_t dVbp_val = *dVbp_ptr;
+  int32_t dVlp_val = *dVlp_ptr;
+  int32_t scratch;
+
+  __asm volatile (
+    "mul %[w0_delta], %[w0_const], %[step]\n"
+    "asr %[w0_delta], %[w0_delta], #6\n"
+    "mul %[dVbp], %[w0_delta], %[Vhp]\n"
+    "asr %[dVbp], %[dVbp], #14\n"
+    "sub %[Vbp], %[Vbp], %[dVbp]\n"
+    "mul %[dVlp], %[w0_delta], %[Vlp]\n"
+    "asr %[dVlp], %[dVlp], #14\n"
+    "sub %[Vlp], %[Vlp], %[dVlp]\n"
+    "mul %[scratch], %[Vbp], %[Qdiv]\n"
+    "asr %[scratch], %[scratch], #10\n"
+    "sub %[scratch], %[scratch], %[Vlp]\n"
+    "sub %[scratch], %[scratch], %[Vin]\n"
+    "mov %[Vhp], %[scratch]\n"
+    : [Vbp] "+r" (Vbp_val),
+      [Vlp] "+r" (Vlp_val),
+      [Vhp] "+r" (Vhp_val),
+      [w0_delta] "+r" (w0_delta_val),
+      [dVbp] "+r" (dVbp_val),
+      [dVlp] "+r" (dVlp_val),
+      [scratch] "=&r" (scratch)
+    : [w0_const] "r" (w0_ceil_dt_val),
+      [step] "r" (delta_t_step),
+      [Qdiv] "r" (Q_1024_div_val),
+      [Vin] "r" (volume_input)
+    : "cc"
+  );
+
+  *Vhp_ptr = Vhp_val;
+  *Vbp_ptr = Vbp_val;
+  *Vlp_ptr = Vlp_val;
+  *w0_delta_t_ptr = w0_delta_val;
+  *dVbp_ptr = dVbp_val;
+  *dVlp_ptr = dVlp_val;
+#else
+  int32_t w0_delta_val = (int32_t)(w0_ceil_dt_val * delta_t_step);
+  w0_delta_val >>= 6;
+  int32_t dVbp_val = (int32_t)(w0_delta_val * (*Vhp_ptr));
+  dVbp_val >>= 14;
+  int32_t dVlp_val = (int32_t)(w0_delta_val * (*Vbp_ptr));
+  dVlp_val >>= 14;
+
+  *Vbp_ptr -= dVbp_val;
+  *Vlp_ptr -= dVlp_val;
+  int32_t filtered = (int32_t)((*Vbp_ptr) * Q_1024_div_val);
+  filtered >>= 10;
+  *Vhp_ptr = filtered - (*Vlp_ptr) - volume_input;
+
+  *w0_delta_t_ptr = w0_delta_val;
+  *dVbp_ptr = dVbp_val;
+  *dVlp_ptr = dVlp_val;
+#endif
+}
+
 /**
  * @brief Main emulator function which outputs to DAC
- * 
+ *
  */
 FORCE_INLINE void SID_emulator ()
 {
@@ -192,32 +308,20 @@ FORCE_INLINE void SID_emulator ()
     // noise_1
     OSC_noise_1 = OSC_noise_1 + multiplier * OSC_1_HiLo; // noise counter (
     OSC_bit19_1 = OSC_noise_1 >> 19 ; //  / 0x080000;// calculate how many missing rising edges of bit_19 since last irq (if any)
-    for (i = 0; i < OSC_bit19_1; i++) {
-      bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
-      pseudorandom_1 = pseudorandom_1 << 1;
-      pseudorandom_1 = bit_0_1 | pseudorandom_1;
-    }
+    pseudorandom_1 = sid_noise_advance(pseudorandom_1, OSC_bit19_1, &bit_0_1);
     OSC_noise_1 = OSC_noise_1 - (OSC_bit19_1 << 19); // * 0x080000); // no reset, keep lower 18bit
 
 
     // noise_2
     OSC_noise_2 = OSC_noise_2 + multiplier * OSC_2_HiLo; // noise counter (
     OSC_bit19_2 = OSC_noise_2 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-    for (i = 0; i < OSC_bit19_2; i++) {
-      bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
-      pseudorandom_2 = pseudorandom_2 << 1;
-      pseudorandom_2 = bit_0_2 | pseudorandom_2;
-    }
+    pseudorandom_2 = sid_noise_advance(pseudorandom_2, OSC_bit19_2, &bit_0_2);
     OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
 
     // noise_3
     OSC_noise_3 = OSC_noise_3 + multiplier * OSC_3_HiLo; // noise counter (
     OSC_bit19_3 = OSC_noise_3 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-    for (i = 0; i < OSC_bit19_3; i++) {
-      bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
-      pseudorandom_3 = pseudorandom_3 << 1;
-      pseudorandom_3 = bit_0_3 | pseudorandom_3;
-    }
+    pseudorandom_3 = sid_noise_advance(pseudorandom_3, OSC_bit19_3, &bit_0_3);
     OSC_noise_3 = OSC_noise_3 - (OSC_bit19_3 << 19 ); //  * 0x080000); // no reset, keep lower 18bit
 
 
@@ -525,24 +629,18 @@ FORCE_INLINE void SID_emulator ()
       if (delta_t < delta_t_flt) {
         delta_t_flt = delta_t;
       }
-      // reSID:
-      // delta_t is converted to seconds given a 1MHz clock by dividing
-      // with 1 000 000. This is done in two operations to avoid integer
-      // multiplication overflow.
 
-      // reSID:
-      //// Calculate filter outputs.
-      //// Vhp = Vbp/Q - Vlp - Vi;
-      //// dVbp = -w0*Vhp*dt;
-      //// dVlp = -w0*Vbp*dt;
-      w0_delta_t = ((int32_t)(w0_ceil_dt * delta_t_flt) >> 6);
-
-      dVbp = ((int32_t)(w0_delta_t*Vhp) >> 14);
-      dVlp = ((int32_t)(w0_delta_t*Vbp) >> 14);
-
-      Vbp -= dVbp;
-      Vlp -= dVlp;
-      Vhp = ((int32_t)(Vbp * (Q_1024_div)) >> 10) - Vlp - Volume_filter_input; // i am not sure is this order is good. Maybe Vhp is calculated first, before Vbp and Vlp?
+      // reSID filter integrator core handled inside sid_filter_iteration()
+      sid_filter_iteration(&Vhp,
+                           &Vbp,
+                           &Vlp,
+                           &w0_delta_t,
+                           &dVbp,
+                           &dVlp,
+                           w0_ceil_dt,
+                           delta_t_flt,
+                           Q_1024_div,
+                           Volume_filter_input);
 
       delta_t -= delta_t_flt;
     }
