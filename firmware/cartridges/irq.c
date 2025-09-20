@@ -292,6 +292,101 @@ FORCE_INLINE void sid_filter_iteration(int32_t *Vhp_ptr,
 }
 
 /**
+ * @brief Apply oscillator sync resets and triangle/ring modulation MSB tweaks.
+ */
+FORCE_INLINE void sid_update_sync_and_ringmod(void)
+{
+#if defined(__arm__) || defined(__thumb__)
+  uint32_t osc1 = OSC_1;
+  uint32_t osc2 = OSC_2;
+  uint32_t osc3 = OSC_3;
+  uint32_t msb1 = OSC_MSB_1;
+  uint32_t msb2 = OSC_MSB_2;
+  uint32_t msb3 = OSC_MSB_3;
+  const uint32_t sid4 = SID[4];
+  const uint32_t sid11 = SID[11];
+  const uint32_t sid18 = SID[18];
+  const uint32_t rise1 = MSB_Rising_1;
+  const uint32_t rise2 = MSB_Rising_2;
+  const uint32_t rise3 = MSB_Rising_3;
+  const uint32_t mask = 0x7fffff;
+
+  __asm volatile (
+    "tst %[sid4], #0x2\n"
+    "beq 0f\n"
+    "tst %[rise3], #0x2\n"
+    "beq 0f\n"
+    "and %[osc1], %[osc1], %[mask]\n"
+    "0:\n"
+    "tst %[sid11], #0x2\n"
+    "beq 1f\n"
+    "tst %[rise1], #0x2\n"
+    "beq 1f\n"
+    "and %[osc2], %[osc2], %[mask]\n"
+    "1:\n"
+    "tst %[sid18], #0x2\n"
+    "beq 2f\n"
+    "tst %[rise2], #0x2\n"
+    "beq 2f\n"
+    "and %[osc3], %[osc3], %[mask]\n"
+    "2:\n"
+    "tst %[sid4], #0x10\n"
+    "beq 3f\n"
+    "tst %[sid4], #0x4\n"
+    "beq 3f\n"
+    "eor %[msb1], %[msb1], %[msb3]\n"
+    "and %[msb1], %[msb1], #1\n"
+    "3:\n"
+    "tst %[sid11], #0x10\n"
+    "beq 4f\n"
+    "tst %[sid11], #0x4\n"
+    "beq 4f\n"
+    "eor %[msb2], %[msb2], %[msb1]\n"
+    "and %[msb2], %[msb2], #1\n"
+    "4:\n"
+    "tst %[sid18], #0x10\n"
+    "beq 5f\n"
+    "tst %[sid18], #0x4\n"
+    "beq 5f\n"
+    "eor %[msb3], %[msb3], %[msb2]\n"
+    "and %[msb3], %[msb3], #1\n"
+    "5:\n"
+    : [osc1] "+r" (osc1),
+      [osc2] "+r" (osc2),
+      [osc3] "+r" (osc3),
+      [msb1] "+r" (msb1),
+      [msb2] "+r" (msb2),
+      [msb3] "+r" (msb3)
+    : [sid4] "r" (sid4),
+      [sid11] "r" (sid11),
+      [sid18] "r" (sid18),
+      [rise1] "r" (rise1),
+      [rise2] "r" (rise2),
+      [rise3] "r" (rise3),
+      [mask] "r" (mask)
+    : "cc"
+  );
+
+  OSC_1 = osc1;
+  OSC_2 = osc2;
+  OSC_3 = osc3;
+  OSC_MSB_1 = (uint8_t)(msb1 & 0x1);
+  OSC_MSB_2 = (uint8_t)(msb2 & 0x1);
+  OSC_MSB_3 = (uint8_t)(msb3 & 0x1);
+#else
+  // SYNC (bit 0b10)
+  if ((SID[4] & 0b10 ) & MSB_Rising_3) OSC_1 = OSC_1 & 0x7fffff;
+  if ((SID[11] & 0b10 ) & MSB_Rising_1) OSC_2 = OSC_2 & 0x7fffff;
+  if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
+
+  // Triangle and ringmod
+  if ((SID[4] & 0b10100) == 0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
+  if ((SID[11] & 0b10100) == 0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
+  if ((SID[18] & 0b10100) == 0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
+#endif
+}
+
+/**
  * @brief Main emulator function which outputs to DAC
  *
  */
@@ -335,15 +430,8 @@ FORCE_INLINE void SID_emulator ()
     if ( (!OSC_MSB_Previous_3) & (OSC_MSB_3)) MSB_Rising_3 = 0b10; else MSB_Rising_3 = 0;
 
 
-    // SYNC (bit 0b10)
-    if ((SID[4] & 0b10 ) & MSB_Rising_3) OSC_1 = OSC_1 & 0x7fffff; // ANDing curent value of OSC with  0x7fffff  i get exact timing when sync happened, no matter of multiplier (and what's more important, what number is in OSC in this exact time)
-    if ((SID[11] & 0b10 ) & MSB_Rising_1) OSC_2 = OSC_2 & 0x7fffff;
-    if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
-
-    //Triangle and ringmod
-    if ( (SID[4]&0b10100)==0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
-    if ( (SID[11]&0b10100)==0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
-    if ( (SID[18]&0b10100)==0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
+    // SYNC (bit 0b10) along with triangle and ring modulation interactions
+    sid_update_sync_and_ringmod();
 
     waveform_switch_1 = SID[4]&0xF0;
     waveform_switch_2 = SID[11]&0xF0;
