@@ -172,7 +172,10 @@ static uint8_t SID[] = {                  //  array that hold values of SID regi
   0,    // POTX                             - REG_25
   0,    // POTY                             - REG_26
   0,    // OSC3                             - REG_27
-  0     // ENV3                             - REG_27
+  0,    // ENV3                             - REG_28
+  0,    // Spare                            - REG_29
+  0,    // Spare                            - REG_30
+  0     // Spare                            - REG_31
 
 };
 
