@@ -11,16 +11,9 @@ obj :=
 obj += build/main.o
 obj += build/base.o
 obj += build/screen.o
-obj += build/dir.o
 obj += build/kff_data.o
-obj += build/disk.o
-obj += build/ef3usb_loader.o
-obj += build/launcher_asm.o
 
 inc      := .
-inc      += ../3rd_party/libef3usb/src
-
-libef3usb := ../3rd_party/libef3usb/libef3usb.lib
 
 INCLUDE  := $(addprefix -I,$(inc))
 DEFINE   := -DKFF_VER=\"${version}\"
@@ -57,8 +50,7 @@ build:
 	@mkdir -p $@
 
 build/$(name).prg: $(obj) $(libef3usb) | build
-	cl65 -t c64 -o $@ $(obj) \
-		--lib $(libef3usb)
+	cl65 -t c64 -o $@ $(obj)
 
 .PHONY: clean
 clean:

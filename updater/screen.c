@@ -47,8 +47,11 @@ void clearArea(int xpos, int ypos, int xsize, int ysize)
 void drawFrame(void)
 {
     // top
+    
     cputcxy(0, 0, CH_ULCORNER);
+    chline(SCREENW - 2);
     cputcxy(SCREENW-1, 0, CH_URCORNER);
+    
 
     // left
     cvlinexy(0, 1, SCREENH - 3);
