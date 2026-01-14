@@ -1,0 +1,44 @@
+name: KungFuSID Updater PRG Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - dev
+  pull_request:
+    branches:
+      - main
+      - master
+      - dev
+
+jobs:
+  build-updater-prg:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install CC65 toolchain
+        run: |
+          sudo apt update
+          sudo apt install -y cc65 make
+
+      - name: Build KungFuSID Updater PRG
+        run: |
+          cd updater
+          make
+
+      - name: Verify PRG output
+        run: |
+          if [ ! -f updater/build/KungFuSIDUpdater.prg ]; then
+            echo "Build failed: updater/build/KungFuSIDUpdater.prg not found."
+            exit 1
+          fi
+
+      - name: Upload PRG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KungFuSIDUpdater.prg
+          path: updater/build/KungFuSIDUpdater.prg

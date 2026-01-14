@@ -5,9 +5,7 @@ ifndef version
 version := 1.XX
 endif
 
-name := KungFuLauncher_v$(version)
-
-ld_config := ld.crt.cfg
+name := KungFuSIDUpdater
 
 obj :=
 obj += build/main.o
@@ -28,7 +26,7 @@ INCLUDE  := $(addprefix -I,$(inc))
 DEFINE   := -DKFF_VER=\"${version}\"
 
 .PHONY: all
-all: build/$(name).bin
+all: build/$(name).prg
 
 ###############################################################################
 # Poor men's dependencies: Let all files depend from all header files
@@ -58,11 +56,9 @@ force:
 build:
 	@mkdir -p $@
 
-build/$(name).bin: build/crt0.crt.o $(obj) $(ld_config) $(libef3usb)
-	ld65 -o $@ -Ln $@.lbl -m $@.map -C $(ld_config) build/crt0.crt.o $(obj) \
-		--lib  $(libef3usb) \
-		-L /usr/local/lib/cc65/lib --lib c64.lib
-	@cat $@.map | grep -e "^Name\|^CODE\|^DATA\|^BSS\|^RODATA\|^ONCE\|^INIT\|^EAPI"
+build/$(name).prg: $(obj) $(libef3usb) | build
+	cl65 -t c64 -o $@ $(obj) \
+		--lib $(libef3usb)
 
 .PHONY: clean
 clean:
