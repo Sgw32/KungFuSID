@@ -20,6 +20,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Set VERSION from git describe
+        run: |
+          git fetch --tags
+          VERSION=$(git describe --tags --always --dirty=-dev)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Using build version: $VERSION"
+
       - name: Install CC65 toolchain
         run: |
           sudo apt update
@@ -28,7 +35,7 @@ jobs:
       - name: Build KungFuSID Updater PRG
         run: |
           cd updater
-          make
+          make version=$VERSION
 
       - name: Verify PRG output
         run: |

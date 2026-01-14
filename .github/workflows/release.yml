@@ -1,0 +1,108 @@
+name: KungFuSID Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set VERSION from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Using build version: $VERSION"
+
+      - name: Set up ARM toolchain
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-arm-none-eabi
+
+      - name: Build KungFuSID Firmware
+        run: |
+          cd firmware
+          make version=$VERSION
+
+      - name: Verify firmware build success
+        run: |
+          if ! ls firmware/build/*.bin 1>/dev/null 2>&1; then
+            echo "Build failed: No .bin file found in the firmware/build/ folder!"
+            exit 1
+          fi
+          echo "Build successful!"
+
+      - name: Upload firmware build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kungfusid-firmware
+          path: firmware/build/*
+
+      - name: Install CC65 toolchain
+        run: |
+          sudo apt update
+          sudo apt install -y cc65 make
+
+      - name: Build KungFuSID Updater PRG
+        run: |
+          cd updater
+          make version=$VERSION
+
+      - name: Verify updater build output
+        run: |
+          if [ ! -f updater/build/KungFuSIDUpdater.prg ]; then
+            echo "Build failed: updater/build/KungFuSIDUpdater.prg not found."
+            exit 1
+          fi
+
+      - name: Upload updater build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KungFuSIDUpdater.prg
+          path: updater/build/KungFuSIDUpdater.prg
+
+      - name: Package release assets
+        run: |
+          mkdir -p release_assets
+          zip -r "release_assets/kungfusid-firmware-$VERSION.zip" firmware/build
+          cp updater/build/KungFuSIDUpdater.prg "release_assets/KungFuSIDUpdater-$VERSION.prg"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            Automated release for `${{ github.ref_name }}`.
+          draft: false
+          prerelease: false
+
+      - name: Upload firmware to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/kungfusid-firmware-${{ env.VERSION }}.zip
+          asset_name: kungfusid-firmware-${{ env.VERSION }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload updater to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/KungFuSIDUpdater-${{ env.VERSION }}.prg
+          asset_name: KungFuSIDUpdater-${{ env.VERSION }}.prg
+          asset_content_type: application/octet-stream
