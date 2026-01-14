@@ -94,9 +94,22 @@ static const char menuBar[] =    {"          " KUNG_FU_FLASH_VER "  <F1> Help"};
 
 int main(void)
 {
-    uint8_t i, tmp, tst;
     initScreen(COLOR_BLACK, COLOR_BLACK, TEXTC);
+    clrscr();
+    textcolor(TEXTC);
+    cputsxy(4, 4, "KUNGFUSID UPDATER");
+    cputsxy(4, 6, "C64 PRG BUILD READY");
+    cputsxy(4, 8, "INSERT UPDATER MEDIA");
+    cputsxy(4, 10, "PRESS ANY KEY TO EXIT");
 
+    /*
+     * KungFuFlash updater logic disabled for PRG builds.
+     *
+     * The original KFF/EF3 communication loops are intentionally
+     * commented out to keep this updater as a simple PRG program.
+     */
+    /*
+    uint8_t i, tmp, tst;
     dir = (Directory *)malloc(sizeof(Directory));
     bigBuffer = (uint8_t *)dir;
     pageBuffer = (uint16_t *)dir;
@@ -140,6 +153,9 @@ int main(void)
     }
 
     free(dir);
+    */
+
+    waitKey();
     return 0;
 }
 
