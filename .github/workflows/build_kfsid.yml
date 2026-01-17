@@ -21,6 +21,13 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Set VERSION from git describe
+      run: |
+        git fetch --tags
+        VERSION=$(git describe --tags --always --dirty=-dev)
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        echo "Using build version: $VERSION"
+
     # Step 2: Set up ARM toolchain (GNU Arm Embedded Toolchain)
     - name: Set up ARM toolchain
       run: |
@@ -31,7 +38,7 @@ jobs:
     - name: Build KungFuSID Firmware
       run: |
         cd firmware
-        make
+        make version=$VERSION
 
     # Step 4: Check if the build was successful
     - name: Verify build success
@@ -41,3 +48,9 @@ jobs:
           exit 1
         fi
         echo "Build successful!"
+
+    - name: Upload firmware artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: kungfusid-firmware
+        path: firmware/build/*
