@@ -2,6 +2,7 @@
 #define _sid
 #include <stdint.h>
 #include <stdbool.h>
+#include "siddefs.h"
 #define F_CPU 168000000
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -13,7 +14,8 @@
 #define USE_FILTERS                        // uncomment for testing, irq is  faster in calculations (so multiplier will be smaller, and samplerate will be higher)
 
 #define FILTER_SENSITIVITY  4              // Lower is better. Best is 1.  It will consume irq time , but FILTER_FREQUENCY can be set much higher
-#define FILTER_FREQUENCY 12500             // You'll know it if it's very high (it will totaly ruin sound)
+#define FILTER_FREQUENCY_6581 12500        // You'll know it if it's very high (it will totaly ruin sound)
+#define FILTER_FREQUENCY_8580 16000
 
 //                                            Play with these two values to determine what is "SID-like" sound
 //                                            NOTE: Filters are linear in all frequencies range. Don't ask for true filters emulation, i'm suprised i managed to emulate it at all :-)
@@ -70,8 +72,9 @@ const uint8_t magic_number = F_CPU / 1000000 ; // PWM resolution - number of cyc
 int32_t w0 = 0;
 //w0 = static_cast<sound_sample>(2*pi*f0[fc]*1.048576); // f0[fc] 0-12500 ; fc 0-7ff
 // w0 = 2*pi*1.048576*(fc*12500/2047)
-int32_t w0_max_dt = (2 * 3.1415926535897932385 * FILTER_FREQUENCY * 1.048576); // maximum frequency that can be filtered
-int32_t w0_constant_part = 2.0 * 3.1415926535897932385 * 1.048576 * FILTER_FREQUENCY   / 2048.0; // around 40.211 per 1 value of FilterHiLo for 12500 max value // TODO : make this const array of 2048 values, as uint32_t, with FILTER_FREQUENCY as array members
+static enum chip_model sid_model = MOS6581;
+int32_t w0_max_dt = (2 * 3.1415926535897932385 * FILTER_FREQUENCY_6581 * 1.048576); // maximum frequency that can be filtered
+int32_t w0_constant_part = 2.0 * 3.1415926535897932385 * 1.048576 * FILTER_FREQUENCY_6581   / 2048.0; // around 40.211 per 1 value of FilterHiLo for 12500 max value // TODO : make this const array of 2048 values, as uint32_t, with FILTER_FREQUENCY as array members
 int32_t w0_ceil_dt = 0.0;
 int32_t w0_delta_t = 0.0;
 
@@ -80,6 +83,23 @@ int32_t Q_1024_div = 0;
 
 int delta_t = 0;
 int delta_t_flt = 0;
+
+static inline void sid_set_filter_frequency(int32_t frequency)
+{
+  w0_max_dt = (int32_t)(2.0 * 3.1415926535897932385 * frequency * 1.048576);
+  w0_constant_part = (int32_t)(2.0 * 3.1415926535897932385 * 1.048576 *
+                              frequency / 2048.0);
+}
+
+static inline void sid_apply_model(enum chip_model model)
+{
+  sid_model = model;
+  if (model == MOS6581) {
+    sid_set_filter_frequency(FILTER_FREQUENCY_6581);
+  } else {
+    sid_set_filter_frequency(FILTER_FREQUENCY_8580);
+  }
+}
 
 int32_t Vhp = 0;
 int32_t Vbp = 0;
