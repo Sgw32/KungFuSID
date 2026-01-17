@@ -60,7 +60,6 @@ static void updateDir(uint8_t last_selected);
 static void printDirPage(void);
 static void printElement(uint8_t pos);
 
-static const char *kff_read_text(void);
 static void showKFFMessage(uint8_t color);
 static void showMessage(const char *text, uint8_t color);
 
@@ -152,8 +151,8 @@ int main(void)
 
 static void showKFFMessage(uint8_t color)
 {
-    const char *text = kff_read_text();
-    showMessage(text, color);
+    // const char *text = kff_read_text();
+    // showMessage(text, color);
 }
 
 static void showTextPage(uint16_t page)
