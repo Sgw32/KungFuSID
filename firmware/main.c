@@ -36,40 +36,6 @@
 
 
 /**
- * @brief Config DAC SID clock
- * @details Timer2 Prescaler :2; Preload = 55999; Actual Interrupt Time = 1 ms
- */
-static void sid_clock_config()
-{
-     // Enable TIM1 clock
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-    __DSB();
-    // period = 2 , clock = 2 MHz, 
-    TIM2->PSC = 168/period;
-    TIM2->ARR = multiplier-1;
-    TIM2->EGR |= TIM_EGR_UG;
-    // Enable TIM1_CC_IRQn, highest priority
-    NVIC_SetPriority(TIM2_IRQn, 2);
-    NVIC_EnableIRQ(TIM2_IRQn);
-    // Enable counter
-    TIM2->SR &= ~TIM_SR_UIF;
-    //Enable the hardware interrupt.
-    TIM2->DIER |= TIM_DIER_UIE;
-    //Enable the timer.
-    TIM2->CR1 |= TIM_CR1_CEN;
-}
-
-/**
- * @brief SID DAC and emulation IRQ handler
- * 
- */
-void TIM2_IRQHandler(void) {
-  TIM2->SR &= ~TIM_SR_UIF;
-  SID_emulator();
-  DAC->DHR12R2 = main_volume;
-}
-
-/**
  * @brief main
  * 
  * @return int 
@@ -80,7 +46,6 @@ int main(void)
     DAC->CR |= DAC_CR_EN2; // Channel 2
     reset_SID();      
     configure_system();
-    sid_clock_config();
     crt_ptr = CRT_LAUNCHER_BANK;
     kff_init();
     C64_INSTALL_HANDLER(kff_handler);
