@@ -18,6 +18,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 #include "sid.h"
+#include "firmware_update.h"
 #define KFF_BUF (CRT_DAT_BANK(0))
 #define KFF_RAM (CRT_RAM_BUF)
 #define KFF_ID_VALUE 0x2a
@@ -48,7 +49,23 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
 {
     if (!(addr&0b100000))
     {
-	    C64_DATA_WRITE(SID[addr&0b11111]);
+        u8 register_addr = addr & 0b11111;
+        if (register_addr == FW_UPDATE_REGISTER)
+        {
+            u8 value = 0;
+            if (firmware_update_read(&value))
+            {
+                C64_DATA_WRITE(value);
+            }
+            else
+            {
+                C64_DATA_WRITE(SID[register_addr]);
+            }
+        }
+        else
+        {
+            C64_DATA_WRITE(SID[register_addr]);
+        }
         return true;
     }
     return false;
@@ -61,8 +78,14 @@ FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
 {
 	if (!(addr&0b100000))
 	{
-            led_toggle();
-            setreg(addr&0b11111,data);
+        u8 register_addr = addr & 0b11111;
+        if (register_addr == FW_UPDATE_REGISTER)
+        {
+            firmware_update_write((u8)data);
+            return;
+        }
+        led_toggle();
+        setreg(register_addr, data);
 	}
 }
 
