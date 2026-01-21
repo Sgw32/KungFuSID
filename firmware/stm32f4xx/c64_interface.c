@@ -163,12 +163,16 @@ static void c64_clock_config()
     // Value set in c64_interface()
     TIM1->CCR3 = 52;
 
-    // Set CC4IF on timer owerflow
-    TIM1->CCR4 = -1;
+    // Generate OC4 trigger on phi2 falling edge (value set in c64_interface())
+    TIM1->CCR4 = 0;
 
     // Enable compare mode 1. OC3 and OC4 is high when TIM1_CNT == TIM1_CCRx
-    MODIFY_REG(TIM1->CCMR2, TIM_CCMR2_OC3M|TIM_CCMR2_OC3M,
+    MODIFY_REG(TIM1->CCMR2, TIM_CCMR2_OC3M|TIM_CCMR2_OC4M,
                             TIM_CCMR2_OC3M_0|TIM_CCMR2_OC4M_0);
+
+    // Use OC4REF as trigger output for TIM2 external clocking
+    MODIFY_REG(TIM1->CR2, TIM_CR2_MMS,
+               TIM_CR2_MMS_2|TIM_CR2_MMS_1|TIM_CR2_MMS_0);
 
     // Disable all TIM1 (and TIM8) interrupts
     TIM1->DIER = 0;
@@ -262,6 +266,7 @@ static void c64_interface(bool state)
     {
         // NTSC timing
         TIM1->CCR3 = NTSC_PHI2_INT;     // generate interrupt before phi2 is high
+        TIM1->CCR4 = NTSC_PHI2_LOW;     // trigger on phi2 falling edge
 
         // Abuse COMPx registers for better performance
         DWT->COMP0 = NTSC_PHI2_HIGH;    // after phi2 is high
@@ -271,6 +276,7 @@ static void c64_interface(bool state)
     {
         // PAL timing
         TIM1->CCR3 = PAL_PHI2_INT;     // generate interrupt before phi2 is high
+        TIM1->CCR4 = PAL_PHI2_LOW;     // trigger on phi2 falling edge
 
         // Abuse COMPx registers for better performance
         DWT->COMP0 = PAL_PHI2_HIGH;    // after phi2 is high

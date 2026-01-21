@@ -37,25 +37,29 @@
 
 /**
  * @brief Config DAC SID clock
- * @details Timer2 Prescaler :2; Preload = 55999; Actual Interrupt Time = 1 ms
+ * @details Timer2 clocked from PHI2 (TIM1 TRGO) and used for SID ticks
  */
 static void sid_clock_config()
 {
-     // Enable TIM1 clock
+     // Enable TIM2 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     __DSB();
-    // period = 2 , clock = 2 MHz, 
-    TIM2->PSC = 168/period;
-    TIM2->ARR = multiplier-1;
+    // External clock mode 1, trigger on TIM1 TRGO (ITR1)
+    MODIFY_REG(TIM2->SMCR, TIM_SMCR_SMS|TIM_SMCR_TS,
+               TIM_SMCR_SMS_2|TIM_SMCR_SMS_1|TIM_SMCR_SMS_0|
+               TIM_SMCR_TS_0);
+    // Set prescaler and auto-reload for SID tick rate
+    TIM2->PSC = 0;
+    TIM2->ARR = multiplier - 1;
     TIM2->EGR |= TIM_EGR_UG;
-    // Enable TIM1_CC_IRQn, highest priority
+    // Enable TIM2_IRQn
     NVIC_SetPriority(TIM2_IRQn, 2);
     NVIC_EnableIRQ(TIM2_IRQn);
     // Enable counter
     TIM2->SR &= ~TIM_SR_UIF;
-    //Enable the hardware interrupt.
+    // Enable the hardware interrupt.
     TIM2->DIER |= TIM_DIER_UIE;
-    //Enable the timer.
+    // Enable the timer.
     TIM2->CR1 |= TIM_CR1_CEN;
 }
 
