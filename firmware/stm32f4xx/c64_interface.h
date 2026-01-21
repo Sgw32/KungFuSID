@@ -128,8 +128,6 @@ static void handler(void)                                                       
     /* interrupt may be delayed */                                              \
     TIM1->SR = ~TIM_SR_CC3IF;                                                   \
     u32 phi2_high = DWT->COMP0;                                                 \
-    u32 phi2_low = DWT->COMP1;                                                  \
-    u32 waited_for_fall = 0;                                                    \
     COMPILER_BARRIER();                                                         \
     /* Use debug cycle counter which is faster to access than timer */          \
     DWT->CYCCNT = TIM1->CNT;                                                    \
@@ -143,10 +141,10 @@ static void handler(void)                                                       
         if (read_handler(control, addr))                                        \
         {                                                                       \
             /* Wait for phi2 to go low */                                       \
+            u32 phi2_low = DWT->COMP1;                                          \
             while (DWT->CYCCNT < phi2_low);                                     \
             /* We releases the bus as fast as possible when phi2 is low */      \
             C64_DATA_INPUT();                                                   \
-            waited_for_fall = 1;                                                \
         }                                                                       \
     }                                                                           \
     else                                                                        \
@@ -154,12 +152,6 @@ static void handler(void)                                                       
         u32 data = C64_DATA_READ();                                             \
         write_handler(control, addr, data);                                     \
     }                                                                           \
-    if (!waited_for_fall)                                                       \
-    {                                                                           \
-        while (DWT->CYCCNT < phi2_low);                                         \
-    }                                                                           \
-    SID_emulator();                                                             \
-    DAC->DHR12R2 = main_volume;                                                 \
 }
 
 // C64_VIC_BUS_HANDLER timing
