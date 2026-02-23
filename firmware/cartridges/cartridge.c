@@ -28,8 +28,10 @@ static u8 *crt_ptr;
 #include "crt_normal.c"
 #include "kff.c"
 
-#define NTSC_OR_PAL_HANDLER(name)   \
-    ntsc ? name##_ntsc_handler : name##_pal_handler
+#define TIMING_HANDLER(name)                                                \
+    (c64_timing_get() == C64_TIMING_NTSC ? name##_ntsc_handler :            \
+     (c64_timing_get() == C64_TIMING_C16 ? name##_c16_handler :             \
+                                          name##_pal_handler))
 
 static void (*crt_get_handler(u32 cartridge_type, bool vic_support)) (void)
 {
