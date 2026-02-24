@@ -163,6 +163,13 @@ void reset_SID()
   EnvelopeGenerator_reset(&gen3);
 }
 
+
+// C version was as follows:
+// for (i = 0; i < OSC_bit19_3; i++) {
+//       bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
+//       pseudorandom_3 = pseudorandom_3 << 1;
+//       pseudorandom_3 = bit_0_3 | pseudorandom_3;
+//     }
 // Optimized 23-bit LFSR update used for noise generation. Implemented in
 // ARM assembly to reduce loop overhead inside the SID interrupt routine.
 FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
@@ -191,6 +198,34 @@ FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
 // Optimized version of the filter integrator loop. The original C version
 // performs multiple multiplications and branches for each iteration. By using
 // ARM assembly we reduce register spills and conditional logic overhead.
+
+//Original C version:
+//  while (delta_t) {
+//       if (delta_t < delta_t_flt) {
+//         delta_t_flt = delta_t;
+//       }
+//       // reSID:
+//       // delta_t is converted to seconds given a 1MHz clock by dividing
+//       // with 1 000 000. This is done in two operations to avoid integer
+//       // multiplication overflow.
+
+//       // reSID:
+//       //// Calculate filter outputs.
+//       //// Vhp = Vbp/Q - Vlp - Vi;
+//       //// dVbp = -w0*Vhp*dt;
+//       //// dVlp = -w0*Vbp*dt;
+//       w0_delta_t = ((int32_t)(w0_ceil_dt * delta_t_flt) >> 6);
+
+//       dVbp = ((int32_t)(w0_delta_t*Vhp) >> 14);
+//       dVlp = ((int32_t)(w0_delta_t*Vbp) >> 14);
+
+//       Vbp -= dVbp;
+//       Vlp -= dVlp;
+//       Vhp = ((int32_t)(Vbp * (Q_1024_div)) >> 10) - Vlp - Volume_filter_input; // i am not sure is this order is good. Maybe Vhp is calculated first, before Vbp and Vlp?
+
+//       delta_t -= delta_t_flt;
+//     }
+
 FORCE_INLINE void filter_update_asm(uint32_t delta)
 {
     uint32_t dt_flt = FILTER_SENSITIVITY;
