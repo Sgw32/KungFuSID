@@ -1,5 +1,7 @@
 [![KungFuSID Build](https://github.com/Sgw32/KungFuSID/actions/workflows/build_kfsid.yml/badge.svg)](https://github.com/Sgw32/KungFuSID/actions/workflows/build_kfsid.yml)
 
+**Updater app is currently not working! Do not use it.**
+
 # Kung Fu SID GD32 version
 
 ![Usage with MixSID on C64](pics/kfsid_units.jpg)
@@ -81,5 +83,6 @@ Crypto:
 0xeDc17cb23241eACe19DF3617291aa7d2d92E62DC (ETH, USDT ERC20)
 Buy something here (3d models):
 https://www.cgtrader.com/sgw32
+
 
 
