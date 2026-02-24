@@ -37,6 +37,22 @@
 
 #define PI 3.14159259
 
+#define SID_VDD_ADC_THRESHOLD 2235U
+
+static void sid_configure_model_from_adc(void)
+{
+    u16 adc_value = adc_read_vdd_adc_pa4();
+
+    if (adc_value > SID_VDD_ADC_THRESHOLD)
+    {
+        sid_apply_model(MOS6581);
+    }
+    else
+    {
+        sid_apply_model(MOS8580);
+    }
+}
+
 
 /**
  * @brief Config DAC SID clock
@@ -91,6 +107,7 @@ int main(void)
     reset_SID();      
     firmware_update_init();
     configure_system();
+    sid_configure_model_from_adc();
     sid_clock_config();
     crt_ptr = CRT_LAUNCHER_BANK;
     kff_init();
