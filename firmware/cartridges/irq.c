@@ -165,7 +165,7 @@ void reset_SID()
 
 // Optimized 23-bit LFSR update used for noise generation. Implemented in
 // ARM assembly to reduce loop overhead inside the SID interrupt routine.
-static FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
+FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
 {
     if (!count)
     {
@@ -191,7 +191,7 @@ static FORCE_INLINE void lfsr_update(uint32_t *state, uint32_t count)
 // Optimized version of the filter integrator loop. The original C version
 // performs multiple multiplications and branches for each iteration. By using
 // ARM assembly we reduce register spills and conditional logic overhead.
-static FORCE_INLINE void filter_update_asm(uint32_t delta)
+FORCE_INLINE void filter_update_asm(uint32_t delta)
 {
     uint32_t dt_flt = FILTER_SENSITIVITY;
     int32_t w0dt, dvbp, dvlp;
@@ -201,6 +201,7 @@ static FORCE_INLINE void filter_update_asm(uint32_t delta)
         "beq    2f\n"
         "1:\n"
         "cmp    %[d], %[f]\n"          /* clamp dt_flt       */
+        "it     lo\n"                  /* <-- required in Thumb */
         "movlo  %[f], %[d]\n"
         "mul    %[w], %[wc], %[f]\n"   /* w0_ceil_dt * dt_flt */
         "asr    %[w], %[w], #6\n"      /* >> 6               */
