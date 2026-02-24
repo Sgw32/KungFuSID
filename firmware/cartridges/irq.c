@@ -237,15 +237,18 @@ FORCE_INLINE void sid_filter_iteration(int32_t *Vhp_ptr,
   int32_t dVlp_val = *dVlp_ptr;
   int32_t scratch;
 
-  __asm volatile (
+  __asm__ volatile (
     "mul %[w0_delta], %[w0_const], %[step]\n"
     "asr %[w0_delta], %[w0_delta], #6\n"
+
     "mul %[dVbp], %[w0_delta], %[Vhp]\n"
     "asr %[dVbp], %[dVbp], #14\n"
     "sub %[Vbp], %[Vbp], %[dVbp]\n"
-    "mul %[dVlp], %[w0_delta], %[Vlp]\n"
+
+    "mul %[dVlp], %[w0_delta], %[Vbp]\n"     /* <-- Vbp, not Vlp */
     "asr %[dVlp], %[dVlp], #14\n"
     "sub %[Vlp], %[Vlp], %[dVlp]\n"
+
     "mul %[scratch], %[Vbp], %[Qdiv]\n"
     "asr %[scratch], %[scratch], #10\n"
     "sub %[scratch], %[scratch], %[Vlp]\n"
@@ -254,15 +257,15 @@ FORCE_INLINE void sid_filter_iteration(int32_t *Vhp_ptr,
     : [Vbp] "+r" (Vbp_val),
       [Vlp] "+r" (Vlp_val),
       [Vhp] "+r" (Vhp_val),
-      [w0_delta] "+r" (w0_delta_val),
-      [dVbp] "+r" (dVbp_val),
-      [dVlp] "+r" (dVlp_val),
-      [scratch] "=&r" (scratch)
+      [w0_delta] "=&r" (w0_delta_val),   /* was +r */
+      [dVbp]     "=&r" (dVbp_val),       /* was +r */
+      [dVlp]     "=&r" (dVlp_val),       /* was +r */
+      [scratch]  "=&r" (scratch)
     : [w0_const] "r" (w0_ceil_dt_val),
-      [step] "r" (delta_t_step),
-      [Qdiv] "r" (Q_1024_div_val),
-      [Vin] "r" (volume_input)
-    : "cc"
+      [step]     "r" (delta_t_step),
+      [Qdiv]     "r" (Q_1024_div_val),
+      [Vin]      "r" (volume_input)
+    : /* no flags needed unless you rely on them */
   );
 
   *Vhp_ptr = Vhp_val;
