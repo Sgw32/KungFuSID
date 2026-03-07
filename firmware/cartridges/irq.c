@@ -400,11 +400,11 @@ FORCE_INLINE void SID_emulator ()
 
     // Increase LFSR15 counter for ADSR (scaled to match)
 
-    //EnvelopeGenerator_clock_dt(&gen1,multiplier);
+    EnvelopeGenerator_clock_dt(&gen1,multiplier);
     ADSR_volume_1 = EnvelopeGenerator_output(&gen1);
-    //EnvelopeGenerator_clock_dt(&gen2,multiplier);
+    EnvelopeGenerator_clock_dt(&gen2,multiplier);
     ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
-    //EnvelopeGenerator_clock_dt(&gen3,multiplier);
+    EnvelopeGenerator_clock_dt(&gen3,multiplier);
     ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
     
     // finished calculations, time to set main volume
@@ -581,14 +581,4 @@ FORCE_INLINE void SID_emulator ()
     SID[26] = POTY;
     SID[27] = (WaveformDA_3 >> 4) & 0xff; //WaveformDA_3 - 12 bit
     SID[28] = ENV3;
-}
-
-void ADSR_emulator()
-{
-    EnvelopeGenerator_clock_dt(&gen1,2);
-    // ADSR_volume_1 = EnvelopeGenerator_output(&gen1);
-    EnvelopeGenerator_clock_dt(&gen2,2);
-    // ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
-    EnvelopeGenerator_clock_dt(&gen3,2);
-    // ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
 }
