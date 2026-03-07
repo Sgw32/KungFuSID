@@ -22,7 +22,7 @@ static const u8 fw_end_sequence_length = sizeof(fw_end_sequence) - 1;
 
 static volatile bool fw_update_active = false;
 static firmware_update_state_t fw_update_state = FW_STATE_IDLE;
-static u8 fw_pending_read = 0;
+static u8 fw_pending_read = 255;
 static bool fw_pending_valid = false;
 static firmware_update_state_t fw_next_state = FW_STATE_IDLE;
 
@@ -31,6 +31,19 @@ static u32 fw_buffer_offset = 0;
 static u32 fw_buffer_count = 0;
 static u8 fw_buffer_checksum = 0;
 static u8 fw_end_sequence_index = 0;
+
+
+// Update procedure
+//Write to 0xd400+29 = 54301 value 0xA5 (165) (FW_UPDATE_START_MAGIC)
+//Read from 54301, check value 0x5A (90) (FW_UPDATE_START_ACK) - after that state is: FW_STATE_WAIT_INDEX
+//Write to 54301 value of sector index (0-3) - after that state is: FW_STATE_WAIT_INDEX_READ
+//Read from 54301 the same value as written - after that state is: FW_STATE_WRITE_DATA
+//Write to 54301 data bytes, until FW_UPDATE_SECTOR_SIZE is reached - after that state is: FW_STATE_WAIT_CHECKSUM_READ
+//Read from 54301 the checksum byte - after that state is: FW_STATE_WAIT_INDEX
+//Repeat previous 4 steps until all sectors are written
+//After that, write to 54301 the end sequence "KFSID_END" - after that state is: FW_STATE_WAIT_END_READ
+//Read from 54301 value 0x5A (90) (FW_UPDATE_END_ACK) - after that state is: FW_STATE_IDLE, and update is finished
+
 
 static void fw_set_pending_read(u8 value, firmware_update_state_t next_state)
 {
@@ -149,26 +162,28 @@ void firmware_update_write(u8 value)
     }
 }
 
-bool firmware_update_read(u8 *value)
+u8 firmware_update_peek(void)
 {
     if (!fw_update_active)
-    {
-        return false;
-    }
+        return 255;
+
+    return fw_pending_read;
+}
+
+void firmware_update_consume(void)
+{
+    if (!fw_update_active)
+        return;
 
     if (fw_pending_valid)
     {
-        *value = fw_pending_read;
         fw_pending_valid = false;
         fw_update_state = fw_next_state;
+
         if (fw_update_state == FW_STATE_WAIT_END_READ)
         {
             fw_update_active = false;
             fw_update_state = FW_STATE_IDLE;
         }
-        return true;
     }
-
-    *value = 0;
-    return true;
 }

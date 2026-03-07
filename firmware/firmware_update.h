@@ -13,6 +13,7 @@ void firmware_update_init(void);
 bool firmware_update_active(void);
 bool firmware_update_sound_enabled(void);
 void firmware_update_write(u8 value);
-bool firmware_update_read(u8 *value);
+u8 firmware_update_peek(void);
+void firmware_update_consume(void);
 
 #endif

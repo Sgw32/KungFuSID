@@ -52,15 +52,8 @@ FORCE_INLINE bool kff_read_handler(u32 control, u32 addr)
         u8 register_addr = addr & 0b11111;
         if (register_addr == FW_UPDATE_REGISTER)
         {
-            u8 value = 0;
-            if (firmware_update_read(&value))
-            {
-                C64_DATA_WRITE(value);
-            }
-            else
-            {
-                C64_DATA_WRITE(SID[register_addr]);
-            }
+            C64_DATA_WRITE(firmware_update_peek());
+            firmware_update_consume();
         }
         else
         {

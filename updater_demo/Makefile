@@ -1,4 +1,4 @@
-TARGET = updater
+TARGET = updater_demo
 
 CC = cl65
 
