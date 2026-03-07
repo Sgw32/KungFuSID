@@ -181,265 +181,234 @@ void reset_SID()
  */
 FORCE_INLINE void SID_emulator ()
 {
-    static uint16_t osc_task_counter = 0;
-    static uint16_t env_task_counter = 0;
-    const uint16_t osc_task_period = multiplier;
-    const uint16_t env_task_period = (uint16_t)osc_task_period * 2u;
-    uint16_t osc_dt = 0;
-    uint16_t env_dt = 0;
-    bool run_osc_task = false;
-    bool run_env_task = false;
+    OSC_MSB_Previous_1 = OSC_MSB_1;
+    OSC_MSB_Previous_2 = OSC_MSB_2;
+    OSC_MSB_Previous_3 = OSC_MSB_3;
 
-    osc_task_counter++;
-    env_task_counter++;
+    OSC_1 = (~(SID[4] >> 3 ) & 1) * ((OSC_1 + (  multiplier * OSC_1_HiLo)) ) & 0xffffff;
+    OSC_2 = (~(SID[11] >> 3 ) & 1) * ((OSC_2 + (  multiplier * OSC_2_HiLo)) ) & 0xffffff;
+    OSC_3 = (~(SID[18] >> 3 ) & 1) * ((OSC_3 + (  multiplier * OSC_3_HiLo)) ) & 0xffffff;
 
-    if (osc_task_counter >= osc_task_period) {
-      osc_dt = osc_task_counter;
-      osc_task_counter = 0;
-      run_osc_task = true;
+    // noise_1
+    OSC_noise_1 = OSC_noise_1 + multiplier * OSC_1_HiLo; // noise counter (
+    OSC_bit19_1 = OSC_noise_1 >> 19 ; //  / 0x080000;// calculate how many missing rising edges of bit_19 since last irq (if any)
+    for (i = 0; i < OSC_bit19_1; i++) {
+      bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
+      pseudorandom_1 = pseudorandom_1 << 1;
+      pseudorandom_1 = bit_0_1 | pseudorandom_1;
     }
+    OSC_noise_1 = OSC_noise_1 - (OSC_bit19_1 << 19); // * 0x080000); // no reset, keep lower 18bit
 
-    if (env_task_counter >= env_task_period) {
-      env_dt = env_task_counter;
-      env_task_counter = 0;
-      run_env_task = true;
+
+    // noise_2
+    OSC_noise_2 = OSC_noise_2 + multiplier * OSC_2_HiLo; // noise counter (
+    OSC_bit19_2 = OSC_noise_2 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
+    for (i = 0; i < OSC_bit19_2; i++) {
+      bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
+      pseudorandom_2 = pseudorandom_2 << 1;
+      pseudorandom_2 = bit_0_2 | pseudorandom_2;
     }
+    OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
 
-    if (!run_osc_task && !run_env_task) {
-      return;
+    // noise_3
+    OSC_noise_3 = OSC_noise_3 + multiplier * OSC_3_HiLo; // noise counter (
+    OSC_bit19_3 = OSC_noise_3 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
+    for (i = 0; i < OSC_bit19_3; i++) {
+      bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
+      pseudorandom_3 = pseudorandom_3 << 1;
+      pseudorandom_3 = bit_0_3 | pseudorandom_3;
     }
-
-    if (run_osc_task) 
-    {
-      OSC_MSB_Previous_1 = OSC_MSB_1;
-      OSC_MSB_Previous_2 = OSC_MSB_2;
-      OSC_MSB_Previous_3 = OSC_MSB_3;
-
-      OSC_1 = (~(SID[4] >> 3 ) & 1) * ((OSC_1 + (  osc_dt * OSC_1_HiLo)) ) & 0xffffff;
-      OSC_2 = (~(SID[11] >> 3 ) & 1) * ((OSC_2 + (  osc_dt * OSC_2_HiLo)) ) & 0xffffff;
-      OSC_3 = (~(SID[18] >> 3 ) & 1) * ((OSC_3 + (  osc_dt * OSC_3_HiLo)) ) & 0xffffff;
-
-      // noise_1
-      OSC_noise_1 = OSC_noise_1 + osc_dt * OSC_1_HiLo; // noise counter (
-      OSC_bit19_1 = OSC_noise_1 >> 19 ; //  / 0x080000;// calculate how many missing rising edges of bit_19 since last irq (if any)
-      for (i = 0; i < OSC_bit19_1; i++) {
-        bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
-        pseudorandom_1 = pseudorandom_1 << 1;
-        pseudorandom_1 = bit_0_1 | pseudorandom_1;
-      }
-      OSC_noise_1 = OSC_noise_1 - (OSC_bit19_1 << 19); // * 0x080000); // no reset, keep lower 18bit
+    OSC_noise_3 = OSC_noise_3 - (OSC_bit19_3 << 19 ); //  * 0x080000); // no reset, keep lower 18bit
 
 
-      // noise_2
-      OSC_noise_2 = OSC_noise_2 + osc_dt * OSC_2_HiLo; // noise counter (
-      OSC_bit19_2 = OSC_noise_2 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-      for (i = 0; i < OSC_bit19_2; i++) {
-        bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
-        pseudorandom_2 = pseudorandom_2 << 1;
-        pseudorandom_2 = bit_0_2 | pseudorandom_2;
-      }
-      OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
+    if (OSC_1 >= 0x800000)     OSC_MSB_1 = 1; else OSC_MSB_1 = 0;
+    if ( (!OSC_MSB_Previous_1) & (OSC_MSB_1)) MSB_Rising_1 = 0b10; else  MSB_Rising_1 = 0;
 
-      // noise_3
-      OSC_noise_3 = OSC_noise_3 + osc_dt * OSC_3_HiLo; // noise counter (
-      OSC_bit19_3 = OSC_noise_3 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-      for (i = 0; i < OSC_bit19_3; i++) {
-        bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
-        pseudorandom_3 = pseudorandom_3 << 1;
-        pseudorandom_3 = bit_0_3 | pseudorandom_3;
-      }
-      OSC_noise_3 = OSC_noise_3 - (OSC_bit19_3 << 19 ); //  * 0x080000); // no reset, keep lower 18bit
+    if (OSC_2 >= 0x800000)     OSC_MSB_2 = 1; else OSC_MSB_2 = 0;
+    if ( (!OSC_MSB_Previous_2) & (OSC_MSB_2)) MSB_Rising_2 = 0b10; else  MSB_Rising_2 = 0;
+
+    if (OSC_3 >= 0x800000)     OSC_MSB_3 = 1; else OSC_MSB_3 = 0;
+    if ( (!OSC_MSB_Previous_3) & (OSC_MSB_3)) MSB_Rising_3 = 0b10; else MSB_Rising_3 = 0;
 
 
-      if (OSC_1 >= 0x800000)     OSC_MSB_1 = 1; else OSC_MSB_1 = 0;
-      if ( (!OSC_MSB_Previous_1) & (OSC_MSB_1)) MSB_Rising_1 = 0b10; else  MSB_Rising_1 = 0;
+    // SYNC (bit 0b10)
+    if ((SID[4] & 0b10 ) & MSB_Rising_3) OSC_1 = OSC_1 & 0x7fffff; // ANDing curent value of OSC with  0x7fffff  i get exact timing when sync happened, no matter of multiplier (and what's more important, what number is in OSC in this exact time)
+    if ((SID[11] & 0b10 ) & MSB_Rising_1) OSC_2 = OSC_2 & 0x7fffff;
+    if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
 
-      if (OSC_2 >= 0x800000)     OSC_MSB_2 = 1; else OSC_MSB_2 = 0;
-      if ( (!OSC_MSB_Previous_2) & (OSC_MSB_2)) MSB_Rising_2 = 0b10; else  MSB_Rising_2 = 0;
+    //Triangle and ringmod
+    if ( (SID[4]&0b10100)==0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
+    if ( (SID[11]&0b10100)==0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
+    if ( (SID[18]&0b10100)==0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
 
-      if (OSC_3 >= 0x800000)     OSC_MSB_3 = 1; else OSC_MSB_3 = 0;
-      if ( (!OSC_MSB_Previous_3) & (OSC_MSB_3)) MSB_Rising_3 = 0b10; else MSB_Rising_3 = 0;
+    waveform_switch_1 = SID[4]&0xF0;
+    waveform_switch_2 = SID[11]&0xF0;
+    waveform_switch_3 = SID[18]&0xF0;
 
+    temp11 = (OSC_1 >> 12); // upper 12 bit of OSC_1 calculate once now
 
-      // SYNC (bit 0b10)
-      if ((SID[4] & 0b10 ) & MSB_Rising_3) OSC_1 = OSC_1 & 0x7fffff; // ANDing curent value of OSC with  0x7fffff  i get exact timing when sync happened, no matter of multiplier (and what's more important, what number is in OSC in this exact time)
-      if ((SID[11] & 0b10 ) & MSB_Rising_1) OSC_2 = OSC_2 & 0x7fffff;
-      if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
+    switch (waveform_switch_1) {
+      case 0b00000000:
+        WaveformDA_1 = 0;
+        break;
+      case 0b00010000:
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_1 = WaveformDA_triangle_1;
+        break;
+      case 0b00100000:
+        WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
+        WaveformDA_1 = WaveformDA_sawtooth_1;
+        break;
+      case 0b00110000:
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
+        WaveformDA_1 = AND_mask[(WaveformDA_triangle_1 & WaveformDA_sawtooth_1)] << 4; // combined waveform. AND-ed value is take from array (array is actually combined waveform of sawtooth and pulse of 0 value (maximum DC) )
+        break;
+      case 0b01000000:
+        if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_1 = WaveformDA_pulse_1;
+        break;
+      case 0b01010000:
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_1 = AND_mask[WaveformDA_triangle_1 & WaveformDA_pulse_1] << 4;
+        break;
+      case 0b01100000:
+        WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
+        if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_1 = AND_mask[WaveformDA_sawtooth_1 & WaveformDA_pulse_1] << 4;
+        break;
+      case 0b01110000:
+        WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_sawtooth_1 = temp11;
+        if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_1 = AND_mask[WaveformDA_pulse_1 & WaveformDA_sawtooth_1 & WaveformDA_triangle_1] << 4;
+        break;
+      case 0b10000000:
+        WaveformDA_noise_1 = B4095 & (pseudorandom_1 >> 11);
+        WaveformDA_1 =  WaveformDA_noise_1;
+        break;
+      default:
+        WaveformDA_1 = 0;
+        break;
 
-      //Triangle and ringmod
-      if ( (SID[4]&0b10100)==0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
-      if ( (SID[11]&0b10100)==0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
-      if ( (SID[18]&0b10100)==0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
-
-      waveform_switch_1 = SID[4]&0xF0;
-      waveform_switch_2 = SID[11]&0xF0;
-      waveform_switch_3 = SID[18]&0xF0;
-
-      temp11 = (OSC_1 >> 12); // upper 12 bit of OSC_1 calculate once now
-
-      switch (waveform_switch_1) {
-        case 0b00000000:
-          WaveformDA_1 = 0;
-          break;
-        case 0b00010000:
-          WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_1 = WaveformDA_triangle_1;
-          break;
-        case 0b00100000:
-          WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
-          WaveformDA_1 = WaveformDA_sawtooth_1;
-          break;
-        case 0b00110000:
-          WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
-          WaveformDA_1 = AND_mask[(WaveformDA_triangle_1 & WaveformDA_sawtooth_1)] << 4; // combined waveform. AND-ed value is take from array (array is actually combined waveform of sawtooth and pulse of 0 value (maximum DC) )
-          break;
-        case 0b01000000:
-          if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_1 = WaveformDA_pulse_1;
-          break;
-        case 0b01010000:
-          WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_1 = AND_mask[WaveformDA_triangle_1 & WaveformDA_pulse_1] << 4;
-          break;
-        case 0b01100000:
-          WaveformDA_sawtooth_1 = temp11; // same as upper 12 bits of OSC
-          if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_1 = AND_mask[WaveformDA_sawtooth_1 & WaveformDA_pulse_1] << 4;
-          break;
-        case 0b01110000:
-          WaveformDA_triangle_1 = ((  (OSC_MSB_1 * B2047) ^ (temp11 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_sawtooth_1 = temp11;
-          if (temp11 >= PW_HiLo_voice_1 )  WaveformDA_pulse_1 = B4095; else WaveformDA_pulse_1 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_1 = AND_mask[WaveformDA_pulse_1 & WaveformDA_sawtooth_1 & WaveformDA_triangle_1] << 4;
-          break;
-        case 0b10000000:
-          WaveformDA_noise_1 = B4095 & (pseudorandom_1 >> 11);
-          WaveformDA_1 =  WaveformDA_noise_1;
-          break;
-        default:
-          WaveformDA_1 = 0;
-          break;
-
-      }
-      // end of voice 1
-      // voice 2
-
-      temp12 = (OSC_2 >> 12); // upper 12 bit of OSC_2 calculate once now
-
-      switch (waveform_switch_2) {
-        case 0b00000000:
-          WaveformDA_2 = 0;
-          break;
-        case 0b00010000:
-          WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_2 = WaveformDA_triangle_2;
-          break;
-        case 0b00100000:
-          WaveformDA_sawtooth_2 = temp12;
-          WaveformDA_2 = WaveformDA_sawtooth_2;
-          break;
-        case 0b00110000:
-          WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_sawtooth_2 = temp12;
-          WaveformDA_2 = AND_mask[(WaveformDA_triangle_2 & WaveformDA_sawtooth_2)] << 4;
-          break;
-        case 0b01000000:
-          if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_2 = WaveformDA_pulse_2;
-          break;
-        case 0b01010000:
-          WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_2 = AND_mask[WaveformDA_triangle_2 & WaveformDA_pulse_2] << 4;
-          break;
-        case 0b01100000:
-          WaveformDA_sawtooth_2 = temp12;
-          if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_2 = AND_mask[WaveformDA_sawtooth_2 & WaveformDA_pulse_2] << 4;
-          break;
-        case 0b01110000:
-          WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_sawtooth_2 = temp12;
-          if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_2 = AND_mask[WaveformDA_pulse_2 & WaveformDA_sawtooth_2 & WaveformDA_triangle_2] << 4;
-          break;
-        case 0b10000000:
-          WaveformDA_noise_2 = B4095 & (pseudorandom_2 >> 11);
-          WaveformDA_2 =  WaveformDA_noise_2;
-          break;
-        default:
-          WaveformDA_2 = 0;
-          break;
-
-      }
-      // end of voice 2
-
-
-      temp13 = (OSC_3 >> 12); // upper 12 bit of OSC_3 calculate once now
-
-      switch (waveform_switch_3) {
-        case 0b00000000:
-          WaveformDA_3 = 0;
-          break;
-        case 0b00010000:
-          WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_3 = WaveformDA_triangle_3;
-          break;
-        case 0b00100000:
-          WaveformDA_sawtooth_3 = temp13;
-          WaveformDA_3 = WaveformDA_sawtooth_3;
-          break;
-        case 0b00110000:
-          WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_sawtooth_3 = temp13;
-          WaveformDA_3 = AND_mask[(WaveformDA_triangle_3 & WaveformDA_sawtooth_3)] << 4;
-          break;
-        case 0b01000000:
-          if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_3 = WaveformDA_pulse_3;
-          break;
-        case 0b01010000:
-          WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_3 = AND_mask[WaveformDA_triangle_3 & WaveformDA_pulse_3] << 4;
-          break;
-        case 0b01100000:
-          WaveformDA_sawtooth_3 = temp13;
-          if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_3 = AND_mask[WaveformDA_sawtooth_3 & WaveformDA_pulse_3] << 4;
-          break;
-        case 0b01110000:
-          WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
-          WaveformDA_sawtooth_3 = temp13;
-          if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
-          WaveformDA_3 = AND_mask[WaveformDA_pulse_3 & WaveformDA_sawtooth_3 & WaveformDA_triangle_3] << 4;
-          break;
-        case 0b10000000:
-          WaveformDA_noise_3 = B4095 & (pseudorandom_3 >> 11);
-          WaveformDA_3 =  WaveformDA_noise_3;
-          break;
-        default:
-          WaveformDA_3 = 0;
-          break;
-
-      }
-      // end of voice 3
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
+    // end of voice 1
+    // voice 2
+
+    temp12 = (OSC_2 >> 12); // upper 12 bit of OSC_2 calculate once now
+
+    switch (waveform_switch_2) {
+      case 0b00000000:
+        WaveformDA_2 = 0;
+        break;
+      case 0b00010000:
+        WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_2 = WaveformDA_triangle_2;
+        break;
+      case 0b00100000:
+        WaveformDA_sawtooth_2 = temp12;
+        WaveformDA_2 = WaveformDA_sawtooth_2;
+        break;
+      case 0b00110000:
+        WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_sawtooth_2 = temp12;
+        WaveformDA_2 = AND_mask[(WaveformDA_triangle_2 & WaveformDA_sawtooth_2)] << 4;
+        break;
+      case 0b01000000:
+        if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_2 = WaveformDA_pulse_2;
+        break;
+      case 0b01010000:
+        WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_2 = AND_mask[WaveformDA_triangle_2 & WaveformDA_pulse_2] << 4;
+        break;
+      case 0b01100000:
+        WaveformDA_sawtooth_2 = temp12;
+        if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_2 = AND_mask[WaveformDA_sawtooth_2 & WaveformDA_pulse_2] << 4;
+        break;
+      case 0b01110000:
+        WaveformDA_triangle_2 = ((  (OSC_MSB_2 * B2047) ^ (temp12 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_sawtooth_2 = temp12;
+        if (temp12 >= PW_HiLo_voice_2 )  WaveformDA_pulse_2 = B4095; else WaveformDA_pulse_2 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_2 = AND_mask[WaveformDA_pulse_2 & WaveformDA_sawtooth_2 & WaveformDA_triangle_2] << 4;
+        break;
+      case 0b10000000:
+        WaveformDA_noise_2 = B4095 & (pseudorandom_2 >> 11);
+        WaveformDA_2 =  WaveformDA_noise_2;
+        break;
+      default:
+        WaveformDA_2 = 0;
+        break;
+
+    }
+    // end of voice 2
+
+
+    temp13 = (OSC_3 >> 12); // upper 12 bit of OSC_3 calculate once now
+
+    switch (waveform_switch_3) {
+      case 0b00000000:
+        WaveformDA_3 = 0;
+        break;
+      case 0b00010000:
+        WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_3 = WaveformDA_triangle_3;
+        break;
+      case 0b00100000:
+        WaveformDA_sawtooth_3 = temp13;
+        WaveformDA_3 = WaveformDA_sawtooth_3;
+        break;
+      case 0b00110000:
+        WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_sawtooth_3 = temp13;
+        WaveformDA_3 = AND_mask[(WaveformDA_triangle_3 & WaveformDA_sawtooth_3)] << 4;
+        break;
+      case 0b01000000:
+        if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_3 = WaveformDA_pulse_3;
+        break;
+      case 0b01010000:
+        WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_3 = AND_mask[WaveformDA_triangle_3 & WaveformDA_pulse_3] << 4;
+        break;
+      case 0b01100000:
+        WaveformDA_sawtooth_3 = temp13;
+        if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_3 = AND_mask[WaveformDA_sawtooth_3 & WaveformDA_pulse_3] << 4;
+        break;
+      case 0b01110000:
+        WaveformDA_triangle_3 = ((  (OSC_MSB_3 * B2047) ^ (temp13 & B2047)) << 1) ; // (2047 or 0) xor (remaining 11 bits) and left-shifted
+        WaveformDA_sawtooth_3 = temp13;
+        if (temp13 >= PW_HiLo_voice_3 )  WaveformDA_pulse_3 = B4095; else WaveformDA_pulse_3 = 0;// if upper 12bits oscilator1 is greater then value in d401/d402, then it's zero volume, else it's full
+        WaveformDA_3 = AND_mask[WaveformDA_pulse_3 & WaveformDA_sawtooth_3 & WaveformDA_triangle_3] << 4;
+        break;
+      case 0b10000000:
+        WaveformDA_noise_3 = B4095 & (pseudorandom_3 >> 11);
+        WaveformDA_3 =  WaveformDA_noise_3;
+        break;
+      default:
+        WaveformDA_3 = 0;
+        break;
+
+    }
+    // end of voice 3
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Increase LFSR15 counter for ADSR (scaled to match)
-    EnvelopeGenerator_clock_dt(&gen1,env_dt);
+
+    //EnvelopeGenerator_clock_dt(&gen1,multiplier);
     ADSR_volume_1 = EnvelopeGenerator_output(&gen1);
-    EnvelopeGenerator_clock_dt(&gen2,env_dt);
+    //EnvelopeGenerator_clock_dt(&gen2,multiplier);
     ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
-    EnvelopeGenerator_clock_dt(&gen3,env_dt);
+    //EnvelopeGenerator_clock_dt(&gen3,multiplier);
     ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
     
     // finished calculations, time to set main volume
-    if (run_env_task) 
-    {
+
     // WaveformDA : 12bit     ( 0 -> 0x0fff  )
     // ADSR_volume : 8bit     ( 0 -> 0x00ff  )
     // Volume_x = 20bit       ( 0 -> 0xfffff )
@@ -549,7 +518,7 @@ FORCE_INLINE void SID_emulator ()
     // Maximum delta cycles for the filter to work satisfactorily under current
     // cutoff frequency and resonance constraints is approximately 8.
 
-    delta_t = env_dt;
+    delta_t = multiplier;
     delta_t_flt = FILTER_SENSITIVITY;
 
     while (delta_t) {
@@ -612,5 +581,14 @@ FORCE_INLINE void SID_emulator ()
     SID[26] = POTY;
     SID[27] = (WaveformDA_3 >> 4) & 0xff; //WaveformDA_3 - 12 bit
     SID[28] = ENV3;
-    }
+}
+
+void ADSR_emulator()
+{
+    EnvelopeGenerator_clock_dt(&gen1,2);
+    // ADSR_volume_1 = EnvelopeGenerator_output(&gen1);
+    EnvelopeGenerator_clock_dt(&gen2,2);
+    // ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
+    EnvelopeGenerator_clock_dt(&gen3,2);
+    // ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
 }

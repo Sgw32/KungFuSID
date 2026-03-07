@@ -62,13 +62,14 @@ static void sid_clock_config()
 {
      // Enable TIM1 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
     __DSB();
     // period = 2 , clock = 2 MHz, 
     TIM2->PSC = 168/period;
-    TIM2->ARR = 0;
+    TIM2->ARR = multiplier-1;
     TIM2->EGR |= TIM_EGR_UG;
     // Enable TIM1_CC_IRQn, highest priority
-    NVIC_SetPriority(TIM2_IRQn, 2);
+    NVIC_SetPriority(TIM2_IRQn, 1);
     NVIC_EnableIRQ(TIM2_IRQn);
     // Enable counter
     TIM2->SR &= ~TIM_SR_UIF;
@@ -76,6 +77,20 @@ static void sid_clock_config()
     TIM2->DIER |= TIM_DIER_UIE;
     //Enable the timer.
     TIM2->CR1 |= TIM_CR1_CEN;
+
+    // period = 2 , clock = 2 MHz, 
+    TIM4->PSC = 168/period;
+    TIM4->ARR = 2;
+    TIM4->EGR |= TIM_EGR_UG;
+    // Enable TIM1_CC_IRQn, highest priority
+    NVIC_SetPriority(TIM4_IRQn, 1);
+    NVIC_EnableIRQ(TIM4_IRQn);
+    // Enable counter
+    TIM4->SR &= ~TIM_SR_UIF;
+    //Enable the hardware interrupt.
+    TIM4->DIER |= TIM_DIER_UIE;
+    //Enable the timer.
+    TIM4->CR1 |= TIM_CR1_CEN;
 }
 
 /**
@@ -93,6 +108,11 @@ void TIM2_IRQHandler(void) {
   {
     DAC->DHR12R2 = 0;
   }
+}
+
+void TIM4_IRQHandler(void) {
+  TIM4->SR &= ~TIM_SR_UIF;
+  ADSR_emulator();
 }
 
 /**
