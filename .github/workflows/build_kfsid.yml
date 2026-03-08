@@ -3,54 +3,71 @@ name: KungFuSID Build
 on:
   push:
     branches:
-      - main  # Trigger this workflow on push to the main branch
-      - master  # Trigger this workflow on push to the master branch
-      - dev  # Trigger this workflow on push to the dev branch
+      - main
+      - master
+      - dev
   pull_request:
     branches:
-      - main  # Trigger this workflow on PR to the main branch
-      - master  # Trigger this workflow on PR to the master branch
-      - dev  # Trigger this workflow on PR to the dev branch
+      - main
+      - master
+      - dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Check out the repository
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set VERSION from git describe
-      run: |
-        git fetch --tags
-        VERSION=$(git describe --tags --always --dirty=-dev)
-        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-        echo "Using build version: $VERSION"
+      - name: Set VERSION from git describe
+        run: |
+          git fetch --tags
+          VERSION=$(git describe --tags --always --dirty=-dev)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Using build version: $VERSION"
 
-    # Step 2: Set up ARM toolchain (GNU Arm Embedded Toolchain)
-    - name: Set up ARM toolchain
-      run: |
-        sudo apt update
-        sudo apt install -y gcc-arm-none-eabi
+      - name: Install build toolchains
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-arm-none-eabi cc65 make
 
-    # Step 3: Navigate to the firmware directory and run make
-    - name: Build KungFuSID Firmware
-      run: |
-        cd firmware
-        make version=$VERSION
+      - name: Build KungFuSID Firmware
+        run: |
+          cd firmware
+          make version=$VERSION
 
-    # Step 4: Check if the build was successful
-    - name: Verify build success
-      run: |
-        if ! ls firmware/build/*.bin 1>/dev/null 2>&1; then
-          echo "Build failed: No .bin file found in the firmware/build/ folder!"
-          exit 1
-        fi
-        echo "Build successful!"
+      - name: Verify firmware build success
+        run: |
+          if ! ls firmware/build/*.bin 1>/dev/null 2>&1; then
+            echo "Build failed: No .bin file found in the firmware/build/ folder!"
+            exit 1
+          fi
+          echo "Firmware build successful!"
 
-    - name: Upload firmware artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: kungfusid-firmware
-        path: firmware/build/*
+      - name: Build updater from fresh firmware binary
+        run: |
+          rm -f updater/*.bin
+          cp firmware/build/*.bin updater/
+          python3 updater/generate_blob.py updater/*.bin
+          cd updater
+          make
+
+      - name: Verify updater build output
+        run: |
+          if [ ! -f updater/updater.prg ]; then
+            echo "Build failed: updater/updater.prg not found."
+            exit 1
+          fi
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r firmware/build artifacts/firmware-build
+          cp updater/updater.prg artifacts/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kungfusid-build
+          path: artifacts/*
