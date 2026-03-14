@@ -18,6 +18,8 @@
 #define DELAY_BETWEEN_SECTORS   12000u
 #define DELAY_BEFORE_FINAL_ACK  4000u
 
+#define MAX_READ_RETRIES        3u
+
 static const uint8_t sector_pattern[FW_UPDATE_SECTOR_COUNT] = {
      0xA0, 0xB0, 0xC0//, 0xD0
 };
@@ -197,15 +199,28 @@ static uint8_t fw_send_sector(uint8_t sector, uint8_t base)
     cputs("Write done");
     print_crlf();
 
-    dev_checksum = fw_read();
+    for (attempt = 0; attempt < MAX_READ_RETRIES; ++attempt)
+    {
+        dev_checksum = fw_read();
 
-    cputs("Checksum expected: $");
-    print_hex8(checksum);
-    print_crlf();
+        cputs("Checksum expected: $");
+        print_hex8(checksum);
+        print_crlf();
 
-    cputs("Checksum read:     $");
-    print_hex8(dev_checksum);
-    print_crlf();
+        cputs("Checksum read:     $");
+        print_hex8(dev_checksum);
+        print_crlf();
+
+        if (dev_checksum == checksum) {
+            break;
+        }
+
+        if (attempt + 1u < MAX_READ_RETRIES) {
+            cputs("Retry checksum read...");
+            print_crlf();
+            delay_loops(DELAY_AFTER_SECTOR_SEL);
+        }
+    }
 
     if (dev_checksum != checksum) {
         cputs("ERROR: checksum mismatch");

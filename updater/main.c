@@ -17,7 +17,7 @@
 #define DELAY_BETWEEN_SECTORS   12000u
 #define DELAY_BEFORE_FINAL_ACK  4000u
 
-#define MAX_READ_RETRIES        2u
+#define MAX_READ_RETRIES        3u
 
 static void print_hex8(uint8_t v)
 {
@@ -182,7 +182,7 @@ static uint8_t fw_send_sector(uint8_t sector,
     cputs("Write done");
     print_crlf();
 
-    for (attempt = 0; attempt < 2; ++attempt) {
+    for (attempt = 0; attempt < MAX_READ_RETRIES; ++attempt) {
         dev_checksum = fw_read();
 
         cputs("Checksum expected: $");
@@ -197,7 +197,7 @@ static uint8_t fw_send_sector(uint8_t sector,
             break;
         }
 
-        if (attempt == 0) {
+        if (attempt + 1u < MAX_READ_RETRIES) {
             cputs("Retry checksum read...");
             print_crlf();
             delay_loops(DELAY_AFTER_SECTOR_SEL);
