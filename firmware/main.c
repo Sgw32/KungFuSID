@@ -24,12 +24,15 @@
 #include <string.h>
 #include "common.h"
 #include "memory.h"
-#include "firmware_update.h"
+#include "kfsid_protocol.h"
+#include "xparam_eeprom.h"
 #include "hal.c"
 #include "stm32f4xx/flash.c"
 #include "print.c"     
 #include "file_types.h"
-#include "firmware_update.c"
+#include "xparam.c"
+#include "xparam_eeprom.c"
+#include "kfsid_protocol.c"
 #include "usid.c"
 #include "cartridge.c"
 #include "math.h"
@@ -84,7 +87,7 @@ static void sid_clock_config()
  */
 void TIM2_IRQHandler(void) {
   TIM2->SR &= ~TIM_SR_UIF;
-  if (firmware_update_sound_enabled())
+  if (kfsid_protocol_audio_enabled())
   {
     SID_emulator();
     DAC->DHR12R2 = main_volume;
@@ -104,8 +107,9 @@ int main(void)
 {
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR |= DAC_CR_EN2; // Channel 2
+    kfsid_params_init();
     reset_SID();      
-    firmware_update_init();
+    kfsid_protocol_init();
     configure_system();
     sid_configure_model_from_adc();
     sid_clock_config();

@@ -73,6 +73,9 @@ int32_t w0 = 0;
 //w0 = static_cast<sound_sample>(2*pi*f0[fc]*1.048576); // f0[fc] 0-12500 ; fc 0-7ff
 // w0 = 2*pi*1.048576*(fc*12500/2047)
 static enum chip_model sid_model = MOS6581;
+static int32_t sid_filter_frequency_6581 = FILTER_FREQUENCY_6581;
+static int32_t sid_filter_frequency_8580 = FILTER_FREQUENCY_8580;
+static uint8_t sid_output_gain_percent = 100;
 int32_t w0_max_dt = (2 * 3.1415926535897932385 * FILTER_FREQUENCY_6581 * 1.048576); // maximum frequency that can be filtered
 int32_t w0_constant_part = 2.0 * 3.1415926535897932385 * 1.048576 * FILTER_FREQUENCY_6581   / 2048.0; // around 40.211 per 1 value of FilterHiLo for 12500 max value // TODO : make this const array of 2048 values, as uint32_t, with FILTER_FREQUENCY as array members
 int32_t w0_ceil_dt = 0.0;
@@ -95,10 +98,22 @@ static inline void sid_apply_model(enum chip_model model)
 {
   sid_model = model;
   if (model == MOS6581) {
-    sid_set_filter_frequency(FILTER_FREQUENCY_6581);
+    sid_set_filter_frequency(sid_filter_frequency_6581);
   } else {
-    sid_set_filter_frequency(FILTER_FREQUENCY_8580);
+    sid_set_filter_frequency(sid_filter_frequency_8580);
   }
+}
+
+static inline void sid_set_model_filter_frequencies(int32_t freq_6581, int32_t freq_8580)
+{
+  sid_filter_frequency_6581 = freq_6581;
+  sid_filter_frequency_8580 = freq_8580;
+  sid_apply_model(sid_model);
+}
+
+static inline void sid_set_output_gain_percent(uint8_t gain_percent)
+{
+  sid_output_gain_percent = gain_percent;
 }
 
 int32_t Vhp = 0;
