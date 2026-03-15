@@ -29,7 +29,7 @@
 #include <string.h>
 #include <cbm.h>
 
-#include "easyprog.h"
+#include "kfsidprog.h"
 #include "screen.h"
 #include "texts.h"
 #include "dir.h"

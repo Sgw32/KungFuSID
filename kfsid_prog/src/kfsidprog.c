@@ -1,5 +1,5 @@
 /*
- * EasyProg - easyprog.c - The main module
+ * KFSIDProg - kfsidprog.c - The main module
  *
  * (c) 2009 - 2011 Thomas Giesel
  *
@@ -31,11 +31,11 @@
 
 #include <ef3usb.h>
 
-#include "easyprog.h"
+#include "kfsidprog.h"
 #include "autoinit.h"
 #include "cart.h"
 #include "screen.h"
-#include "eapiglue.h"
+#include "hwglue.h"
 #include "flash.h"
 #include "texts.h"
 #include "hex.h"
@@ -362,65 +362,14 @@ void refreshElapsedTime(void)
  */
 uint8_t checkFlashType(void)
 {
-    uint8_t* pDriver;
-    uint8_t  bDriverFound = 0;
-
-    pDriver = aEAPIDrivers[0];
-    while (*pDriver)
-    {
-        memcpy(EAPI_LOAD_TO, pDriver, EAPI_SIZE);
-
-        nBanks = eapiInit(&nManufacturerId, &nDeviceId);
-
-        if (nBanks > 0)
-        {
-            bDriverFound = 1;
-            break;
-        }
-
-        /* if we are here, there is an error */
-        switch (nDeviceId)
-        {
-        case EAPI_ERR_RAM:
-            screenPrintSimpleDialog(apStrBadRAM);
-            goto failed;
-
-        case EAPI_ERR_ROML_PROTECTED:
-            screenPrintSimpleDialog(apStrROMLProtected);
-            goto failed;
-
-        case EAPI_ERR_ROMH_PROTECTED:
-            screenPrintSimpleDialog(apStrROMHProtected);
-            goto failed;
-        }
-        pDriver += EAPI_SIZE;
-    }
-
-    if (bDriverFound)
-    {
-        pStrFlashDriver = EAPI_DRIVER_NAME;
-        g_nSlots = 1;
-        if (nBanks < 64)
-        {
-            g_nSlots = nBanks;
-            nBanks = 64;
-            eapiSetSlot(g_nSelectedSlot);
-        }
-        updateMemSizeText();
-        refreshMainScreen();
-        return 1;
-    }
-    else
-    {
-        screenPrintSimpleDialog(apStrWrongFlash);
-    }
-
-failed:
-    pStrFlashDriver = "(failed)";
+    nManufacturerId = FLASH_MX29LV640EB_MFR_ID;
+    nDeviceId = FLASH_MX29LV640EB_DEV_ID;
+    nBanks = FLASH_NUM_BANKS;
+    g_nSlots = 1;
+    pStrFlashDriver = "stub";
+    updateMemSizeText();
     refreshMainScreen();
-    nManufacturerId = nDeviceId = 0;
-    g_nSlots = g_nSelectedSlot = 0;
-    return 0;
+    return 1;
 }
 
 

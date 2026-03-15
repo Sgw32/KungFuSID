@@ -1,5 +1,5 @@
 /*
- * EasyProg - easyprog.c - The main module
+ * KFSIDProg - kfsidprog.c - The main module
  *
  * (c) 2009 - 2012 Thomas Giesel
  *

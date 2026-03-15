@@ -34,7 +34,7 @@
 #include "sprites.h"
 #include "util.h"
 
-#include "easyprog.h"
+#include "kfsidprog.h"
 
 const char* pStrHexDigits = "0123456789ABCDEF";
 
