@@ -28,10 +28,10 @@
 
 #include "screen.h"
 #include "texts.h"
-#include "easyprog.h"
+#include "kfsidprog.h"
 #include "torturetest.h"
 #include "flash.h"
-#include "eapiglue.h"
+#include "hwglue.h"
 #include "slots.h"
 #include "util.h"
 
@@ -143,7 +143,7 @@ static uint8_t tortureTestFlashIds(void)
     nLoop = 0;
     do
     {
-        if (!eapiReInit())
+        if (!hwReInit())
         {
             screenPrintTwoLinesDialog(pStrTestFailed, "(Init)");
             return 0;

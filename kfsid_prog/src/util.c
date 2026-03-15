@@ -34,7 +34,7 @@
 #include "filedlg.h"
 #include "screen.h"
 #include "texts.h"
-#include "easyprog.h"
+#include "kfsidprog.h"
 #include "eload.h"
 #include "timer.h"
 #include "slots.h"

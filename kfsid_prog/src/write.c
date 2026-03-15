@@ -31,7 +31,7 @@
 #include "screen.h"
 #include "texts.h"
 #include "cart.h"
-#include "easyprog.h"
+#include "kfsidprog.h"
 #include "flash.h"
 #include "startupbin.h"
 #include "write.h"
@@ -42,7 +42,7 @@
 #include "timer.h"
 #include "util.h"
 #include "eload.h"
-#include "eapiglue.h"
+#include "hwglue.h"
 
 /******************************************************************************/
 /* local macros for readability */

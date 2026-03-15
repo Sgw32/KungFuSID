@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "flash.h"
-#include "eapiglue.h"
+#include "hwglue.h"
 #include "util.h"
 #include "screen.h"
 #include "slots.h"
@@ -38,8 +38,8 @@ static void hexShowBlock(void)
         p = ROM0_BASE;
 
     p += addr.nOffset;
-    eapiSetSlot(g_nSelectedSlot);
-    eapiSetBank(addr.nBank);
+    hwSetSlot(g_nSelectedSlot);
+    hwSetBank(addr.nBank);
 
     utilStr[0] = '\0';
     addr.nSlot = g_nSelectedSlot;
@@ -124,7 +124,7 @@ void hexViewer(void)
     char key;
     uint8_t  prevKeyRepeat;
 
-    if (!eapiReInit())
+    if (!hwReInit())
         return;
 
     screenPrintFrame();

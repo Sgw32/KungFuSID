@@ -11,14 +11,14 @@ endif
 obj :=
 obj += obj/crt0.o
 obj += obj/autoinit.o
-obj += obj/eapiglueasm.o
 obj += obj/texts.o
 obj += obj/torturetestasm.o
 obj += obj/startupbin.o
 obj += obj/spritesasm.o
 obj += obj/exostreamdecr1.o
 obj += obj/utilasm.o
-obj += obj/easyprog.o
+obj += obj/kfsidprog.o
+obj += obj/hwglue.o
 obj += obj/flash.o
 obj += obj/cart.o
 obj += obj/screen.o
@@ -47,15 +47,6 @@ endif
 bin_acme :=
 bin_acme += obj/startup.bin
 bin_acme += obj/sprites.bin
-
-eapi := eapi-am29f040-14
-eapi += eapi-m29w160t-03
-eapi += eapi-mx29640b-12
-eapi += eapi-sst39sf040-10
-
-eapi_dir := ../EasySDK/eapi
-eapi_src := $(addprefix $(eapi_dir)/out/,$(eapi))
-eapi_obj := $(addprefix obj/,$(eapi))
 
 inc      := src
 inc      += eload/src
@@ -96,21 +87,8 @@ obj/%.o: obj/%.s | obj
 	ca65 -t c64 -o $@ $<
 
 ###############################################################################
-# the binaries created with acme are included in ca65 source code
-# therefore we need a dependency here, and we need the built-in eapi
-#
-obj/%.o: src/%.s $(bin_acme) $(eapi_obj) | obj
+obj/%.o: src/%.s $(bin_acme) | obj
 	ca65 -t c64 -o $@ $<
-
-###############################################################################
-# Always build eapi and copy it here
-#
-.PHONY: always
-always:
-
-$(eapi_obj): always | obj
-	$(MAKE) -C $(eapi_dir)
-	cp $(eapi_src) obj
 
 ###############################################################################
 obj/%.bin: src/%.s | obj
@@ -155,5 +133,4 @@ clean:
 	rm -rf obj
 	$(MAKE) -C $(dir $(eload)) clean
 	$(MAKE) -C $(dir $(libprint)) clean
-	$(MAKE) -C $(eapi_dir) clean
 

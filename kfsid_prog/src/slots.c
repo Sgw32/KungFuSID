@@ -27,8 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "easyprog.h"
-#include "eapiglue.h"
+#include "kfsidprog.h"
+#include "hwglue.h"
 #include "texts.h"
 #include "flash.h"
 #include "slots.h"
@@ -59,8 +59,8 @@ void slotsFillEFDir(void)
     nSlot = g_nSelectedSlot;
     g_nSelectedSlot = EF_DIR_SLOT;
 
-    eapiReInit();
-    eapiSetBank(EF_DIR_BANK);
+    hwReInit();
+    hwSetBank(EF_DIR_BANK);
 
     efCopyCartROM(&m_EFDir, (void*)(0x8000), sizeof(m_EFDir));
     if (memcmp(m_EFDir.signature,
@@ -269,7 +269,7 @@ void __fastcall__ slotSaveName(const char* name, uint8_t nKERNAL)
     addr.nBank = EF_DIR_BANK;
     addr.nChip = 0;
     addr.nOffset = 0;
-    // slotsFillEFDir initialized EAPI etc. for us already
+    // slotsFillEFDir initialized driver etc. for us already
     eraseSector(EF_DIR_BANK, 0);
     do
     {

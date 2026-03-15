@@ -186,7 +186,7 @@ const char* apStrWriteComplete[] =
         NULL
 };
 
-const char* apStrEAPIInvalid[] =
+const char* apStrDriverInvalid[] =
 {
         "The EasyAPI driver on",
         "disk is invalid.",
