@@ -60,11 +60,24 @@ jobs:
             exit 1
           fi
 
+      - name: Build kfsid_prog app
+        run: |
+          cd kfsid_prog
+          make
+
+      - name: Verify kfsid_prog build output
+        run: |
+          if [ ! -f kfsid_prog/kfsid_prog.prg ]; then
+            echo "Build failed: kfsid_prog/kfsid_prog.prg not found."
+            exit 1
+          fi
+
       - name: Collect artifacts
         run: |
           mkdir -p artifacts
           cp -r firmware/build artifacts/firmware-build
           cp updater/updater.prg artifacts/
+          cp kfsid_prog/kfsid_prog.prg artifacts/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

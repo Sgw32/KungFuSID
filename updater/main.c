@@ -82,6 +82,31 @@ static void sector_progress(uint16_t chunk, uint16_t total_chunks)
     cputs("      ");
 }
 
+static uint8_t ask_confirm_update(void)
+{
+    char key;
+
+    cputs("Start update? (Y/N)");
+    print_crlf();
+
+    while (1) {
+        key = cgetc();
+
+        if (key == 'y' || key == 'Y') {
+            cputs("Confirmed.");
+            print_crlf();
+            print_crlf();
+            return 1;
+        }
+
+        if (key == 'n' || key == 'N') {
+            cputs("Canceled.");
+            print_crlf();
+            return 0;
+        }
+    }
+}
+
 static uint8_t fw_start(void)
 {
     uint8_t ack;
@@ -285,6 +310,10 @@ int main(void)
 
     progress_bar(0, FW_BLOB_SECTOR_COUNT);
     sector_progress(0, 64);
+
+    if (!ask_confirm_update()) {
+        return 0;
+    }
 
     if (!fw_start()) {
         cputs("Update failed at start.");

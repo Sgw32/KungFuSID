@@ -104,51 +104,33 @@ ScreenMenu menuMain =
             0
         },
         {
-            "Write &KERNAL to flash",
-            checkWriteKERNALImage,
-            isEF3,
+            "Write BIN to &LOROM",
+            checkWriteLOROMImage,
+            returnTrue,
             0
         },
         {
-            "Write A&R/RR/NP to flash",
-            checkWriteARImage,
-            isEF3,
+            "Write BIN to &HIROM",
+            checkWriteHIROMImage,
+            returnTrue,
             0
         },
         {
-            "Write SS&5 to flash",
-            checkWriteSS5Image,
-            isEF3,
+            "&Update from BIN",
+            checkWriteUpdateBIN,
+            returnTrue,
             0
         },
         {
             "Erase &all",
             checkEraseAll,
-            returnTrue, //ifHaveValidFlash,
+            returnTrue,
             0
         },
         {
             "Erase &slot",
             checkEraseSlot,
-            isEF3,
-            0
-        },
-        {
-            "Erase KERNAL",
-            checkEraseKERNAL,
-            isEF3,
-            0
-        },
-        {
-            "Erase AR/RR/NP",
-            checkEraseAR,
-            isEF3,
-            0
-        },
-        {
-            "Erase SS5",
-            checkEraseSS5,
-            isEF3,
+            returnTrue,
             0
         },
         { NULL, NULL, 0, 0 }
@@ -188,51 +170,9 @@ ScreenMenu menuExpert =
             0
         },
         {
-            "Write BIN to &LOROM",
-            checkWriteLOROMImage,
-            returnTrue, //ifHaveValidFlash,
-            0
-        },
-        {
-            "Write BIN to &HIROM",
-            checkWriteHIROMImage,
-            returnTrue, //ifHaveValidFlash,
-            0
-        },
-        {
-            "&Torture test",
-            tortureTestComplete,
-            returnTrue, //ifHaveValidFlash,
-            0
-        },
-        {
-            "&Read torture test",
-            tortureTestRead,
-            returnTrue, //ifHaveValidFlash,
-            0
-        },
-        {
-            "R&AM test",
-            tortureTestRAM,
-            returnTrue,
-            0
-        },
-        {
-            "US&B test",
-            usbTest,
-            isEF3,
-            0
-        },
-        {
             "He&x viewer",
             hexViewer,
-            returnTrue, //ifHaveValidFlash,
-            0
-        },
-        {
-            "&Edit directory",
-            slotsEditDirectory,
-            isEF3,
+            returnTrue,
             0
         },
         {
@@ -640,7 +580,7 @@ int main(void)
     progressInit();
 
     debug_init();
-    debug_puts("\r\nEasyProg debug output\r\n");
+    debug_puts("\r\nKFSID Prog debug output\r\n");
 
     resetCartInfo();
 

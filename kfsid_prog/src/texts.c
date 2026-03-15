@@ -40,7 +40,7 @@ const char* apStrAbout[] =
         "",
         "Version " EFVERSION,
         "",
-        "(C) Thomas 'skoe' Giesel",
+        "KungFuSID Team",
         "under zlib license",
         "",
         "(compiled: " __DATE__ " " __TIME__ ")",
@@ -85,7 +85,7 @@ const char* apStrWrongFlash[] =
 
 const char* apStrBadRAM[] =
 {
-        "There is no EasyFlash attached",
+        "KungFuSID cartridge is not ready",
         "or the cartridge RAM at $DF00",
         "does not work correctly.",
         NULL

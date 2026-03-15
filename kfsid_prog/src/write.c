@@ -25,6 +25,7 @@
 #include <conio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <peekpoke.h>
 
 #include "cart.h"
 #include "screen.h"
@@ -52,6 +53,19 @@
 #define EF3_AR_BANK     0x10
 #define EF3_SS5_BANK    0x20
 
+
+#define KFSID_FW_REG                54301u
+#define KFSID_FW_START_MAGIC        0xA5
+#define KFSID_FW_START_ACK          0x5A
+#define KFSID_FW_END_ACK            0x5A
+#define KFSID_FW_SECTOR_SIZE        (16UL * 1024UL)
+#define KFSID_FW_WRITE_DELAY        8u
+#define KFSID_FW_DELAY_START        2000u
+#define KFSID_FW_DELAY_SECTOR       3000u
+#define KFSID_FW_DELAY_CHECKSUM     3000u
+#define KFSID_FW_DELAY_END          4000u
+#define KFSID_FW_MAX_RETRIES        3u
+
 /******************************************************************************/
 /* Static variables */
 
@@ -60,6 +74,137 @@ static uint8_t  m_nBank;
 static uint16_t m_nAddress;
 static uint16_t m_nSize;
 static BankHeader bankHeader;
+
+
+static void fwDelayLoops(unsigned int loops)
+{
+    volatile unsigned int i;
+    for (i = 0; i < loops; ++i)
+    {
+    }
+}
+
+static void fwWriteByte(uint8_t value)
+{
+    POKE(KFSID_FW_REG, value);
+}
+
+static uint8_t fwReadByte(void)
+{
+    return PEEK(KFSID_FW_REG);
+}
+
+static uint8_t fwStartUpdate(void)
+{
+    uint8_t ack;
+    uint8_t attempt;
+
+    fwWriteByte(KFSID_FW_START_MAGIC);
+
+    for (attempt = 0; attempt < KFSID_FW_MAX_RETRIES; ++attempt)
+    {
+        fwDelayLoops(KFSID_FW_DELAY_START);
+        ack = fwReadByte();
+
+        if (ack == KFSID_FW_START_ACK)
+            return 1;
+    }
+
+    return 0;
+}
+
+static uint8_t fwSendUpdateSector(uint8_t sector, uint8_t* pHasData)
+{
+    unsigned long i;
+    uint16_t chunk;
+    uint8_t attempt;
+    uint8_t checksum;
+    uint8_t devChecksum;
+    int nBytes;
+    uint8_t value;
+
+    nBytes = utilRead(BLOCK_BUFFER, 0x100);
+    if (nBytes <= 0)
+    {
+        *pHasData = 0;
+        return (nBytes == 0);
+    }
+
+    if (nBytes < 0x100)
+        memset(BLOCK_BUFFER + nBytes, 0xFF, 0x100 - nBytes);
+
+    for (attempt = 0; attempt < 2; ++attempt)
+    {
+        fwDelayLoops(KFSID_FW_DELAY_SECTOR * 10u);
+        fwWriteByte(sector);
+        fwDelayLoops(KFSID_FW_DELAY_SECTOR);
+
+        if (fwReadByte() == sector)
+            break;
+    }
+
+    if (attempt == 2)
+        return 0;
+
+    checksum = 0;
+    for (chunk = 0; chunk < 64; ++chunk)
+    {
+        if (chunk > 0)
+        {
+            nBytes = utilRead(BLOCK_BUFFER, 0x100);
+            if (nBytes < 0)
+                return 0;
+
+            if (nBytes < 0x100)
+                memset(BLOCK_BUFFER + nBytes, 0xFF, 0x100 - nBytes);
+        }
+
+        for (i = 0; i < 256UL; ++i)
+        {
+            value = BLOCK_BUFFER[i];
+            fwWriteByte(value);
+            checksum ^= value;
+            fwDelayLoops(KFSID_FW_WRITE_DELAY);
+        }
+    }
+
+    *pHasData = 1;
+
+    for (attempt = 0; attempt < KFSID_FW_MAX_RETRIES; ++attempt)
+    {
+        devChecksum = fwReadByte();
+        if (devChecksum == checksum)
+            return 1;
+
+        fwDelayLoops(KFSID_FW_DELAY_CHECKSUM);
+    }
+
+    return 0;
+}
+
+static uint8_t fwFinalizeUpdate(void)
+{
+    uint8_t i;
+    uint8_t ack;
+    uint8_t attempt;
+    static const char endSequence[] = "KFSID_END";
+
+    for (i = 0; endSequence[i] != '\0'; ++i)
+    {
+        fwWriteByte((uint8_t) endSequence[i]);
+        fwDelayLoops(KFSID_FW_WRITE_DELAY * 8u);
+    }
+
+    for (attempt = 0; attempt < KFSID_FW_MAX_RETRIES; ++attempt)
+    {
+        fwDelayLoops(KFSID_FW_DELAY_END);
+        ack = fwReadByte();
+        if (ack == KFSID_FW_END_ACK)
+            return 1;
+    }
+
+    return 0;
+}
 
 /******************************************************************************/
 /**
@@ -459,6 +604,60 @@ void checkWriteCRTImageFromUSB(void)
     }
 }
 
+
+
+/******************************************************************************/
+/**
+ * Load firmware .BIN file and flash it using the updater protocol.
+ */
+void checkWriteUpdateBIN(void)
+{
+    uint8_t sector = 0;
+
+    if (writeOpenFile("BIN") != CART_RV_OK)
+        return;
+
+    setStatus("Starting updater protocol");
+
+    if (!fwStartUpdate())
+    {
+        utilCloseFile();
+        timerStop();
+        screenPrintSimpleDialog(apStrFlashWriteFailed);
+        return;
+    }
+
+    while (1)
+    {
+        uint8_t hasData;
+
+        hasData = 0;
+        setStatus("Flashing updater sector");
+        if (!fwSendUpdateSector(sector, &hasData))
+        {
+            utilCloseFile();
+            timerStop();
+            screenPrintSimpleDialog(apStrFlashWriteFailed);
+            return;
+        }
+
+        if (!hasData)
+            break;
+
+        ++sector;
+    }
+
+    utilCloseFile();
+    timerStop();
+
+    if (!fwFinalizeUpdate())
+    {
+        screenPrintSimpleDialog(apStrFlashWriteFailed);
+        return;
+    }
+
+    screenPrintSimpleDialog(apStrWriteComplete);
+}
 
 /******************************************************************************/
 /**
