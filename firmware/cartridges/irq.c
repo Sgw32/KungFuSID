@@ -1,6 +1,7 @@
 #include "setup.h"
 #include "irq.h"
 #include "sid.h"
+#include "xparam_eeprom.h"
 #include "envelope.c"
 
 static struct EnvelopeGenerator gen1;
@@ -170,6 +171,7 @@ void reset_SID()
   FILTER_Resonance      = 0;              // 0-15         // 
   OFF3                  = 0;              // true/false   // 
   memset(SID, 0, sizeof(SID));
+  SID[24] = kungfusid_parameters.default_sid_volume.value & 0x0F;
   EnvelopeGenerator_reset(&gen1);
   EnvelopeGenerator_reset(&gen2);
   EnvelopeGenerator_reset(&gen3);
@@ -573,6 +575,7 @@ FORCE_INLINE void SID_emulator ()
     main_volume_32bit = (main_volume_32bit) >> 3; // 28-12 = 16bit
     main_volume_32bit = (main_volume_32bit *  (SID[24]&0x0F)); //16+4 =20bit MASTER_VOLUME
     main_volume_32bit = (main_volume_32bit) >> 9; // 28-12 = 16bit
+    main_volume_32bit = (main_volume_32bit * sid_output_gain_percent) / 100;
     main_volume = main_volume_32bit;
 
 
