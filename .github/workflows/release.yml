@@ -24,10 +24,10 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "Using build version: $VERSION"
 
-      - name: Set up ARM toolchain
+      - name: Install build toolchains
         run: |
           sudo apt update
-          sudo apt install -y gcc-arm-none-eabi
+          sudo apt install -y gcc-arm-none-eabi cc65 make python3
 
       - name: Build KungFuSID Firmware
         run: |
@@ -40,7 +40,22 @@ jobs:
             echo "Build failed: No .bin file found in the firmware/build/ folder!"
             exit 1
           fi
-          echo "Build successful!"
+          echo "Firmware build successful!"
+
+      - name: Build updater from fresh firmware binary
+        run: |
+          rm -f updater/*.bin
+          cp firmware/build/*.bin updater/
+          python3 updater/generate_blob.py updater/*.bin
+          cd updater
+          make
+
+      - name: Verify updater build output
+        run: |
+          if [ ! -f updater/updater.prg ]; then
+            echo "Build failed: updater/updater.prg not found."
+            exit 1
+          fi
 
       - name: Upload firmware build artifacts
         uses: actions/upload-artifact@v4
@@ -48,53 +63,17 @@ jobs:
           name: kungfusid-firmware
           path: firmware/build/*
 
-      - name: Install CC65 toolchain
-        run: |
-          sudo apt update
-          sudo apt install -y cc65 make
-
-      - name: Build KungFuSID Updater PRG
-        run: |
-          cd updater
-          make version=$VERSION
-
-      - name: Verify updater build output
-        run: |
-          if [ ! -f updater/build/KungFuSIDUpdater.prg ]; then
-            echo "Build failed: updater/build/KungFuSIDUpdater.prg not found."
-            exit 1
-          fi
-
       - name: Upload updater build artifact
         uses: actions/upload-artifact@v4
         with:
           name: KungFuSIDUpdater.prg
-          path: updater/build/KungFuSIDUpdater.prg
-
-      - name: Build kfsid_prog PRG
-        run: |
-          cd kfsid_prog
-          make
-
-      - name: Verify kfsid_prog build output
-        run: |
-          if [ ! -f kfsid_prog/kfsid_prog.prg ]; then
-            echo "Build failed: kfsid_prog/kfsid_prog.prg not found."
-            exit 1
-          fi
-
-      - name: Upload kfsid_prog build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: kfsid_prog.prg
-          path: kfsid_prog/kfsid_prog.prg
+          path: updater/updater.prg
 
       - name: Package release assets
         run: |
           mkdir -p release_assets
           zip -r "release_assets/kungfusid-firmware-$VERSION.zip" firmware/build
-          cp updater/build/KungFuSIDUpdater.prg "release_assets/KungFuSIDUpdater-$VERSION.prg"
-          cp kfsid_prog/kfsid_prog.prg "release_assets/kfsid_prog-$VERSION.prg"
+          cp updater/updater.prg "release_assets/KungFuSIDUpdater-$VERSION.prg"
 
       - name: Create GitHub Release
         id: create_release
@@ -102,7 +81,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name  }}
+          tag_name: ${{ github.ref_name }}
           release_name: Release ${{ github.ref_name }}
           body: |
             Automated release for `${{ github.ref_name }}`.
@@ -127,15 +106,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: release_assets/KungFuSIDUpdater-${{ env.VERSION }}.prg
           asset_name: KungFuSIDUpdater-${{ env.VERSION }}.prg
-          asset_content_type: application/octet-stream
-
-
-      - name: Upload kfsid_prog to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release_assets/kfsid_prog-${{ env.VERSION }}.prg
-          asset_name: kfsid_prog-${{ env.VERSION }}.prg
           asset_content_type: application/octet-stream

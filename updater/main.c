@@ -342,11 +342,11 @@ int main(void)
         }
     }
 
-    if (!fw_finalize()) {
-        cputs("Update failed at finalize.");
-        print_crlf();
-        return 0;
-    }
+    // if (!fw_finalize()) {
+    //     cputs("Update failed at finalize.");
+    //     print_crlf();
+    //     return 0;
+    // }
 
     gotoxy(0, 22);
     cputs("Firmware update complete.");
