@@ -56,6 +56,7 @@ void checkWriteCRTImage(void);
 void checkWriteCRTImageFromUSB(void);
 void checkWriteLOROMImage(void);
 void checkWriteHIROMImage(void);
+void checkWriteUpdateBIN(void);
 void checkWriteKERNALImage(void);
 void checkWriteARImage(void);
 void checkWriteSS5Image(void);

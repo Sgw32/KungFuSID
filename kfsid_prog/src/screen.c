@@ -429,7 +429,7 @@ uint8_t __fastcall__ screenPrintDialog(const char* apStrLines[], uint8_t flags)
     y = yStart;
     screenPrintTopLine(xStart, xEnd, y);
     screenPrintFreeLine(xStart, xEnd, ++y);
-    cputsxy(xStart + 1, y, "EasyProg");
+    cputsxy(xStart + 1, y, "KFSID Prog");
     screenPrintSepLine(xStart, xEnd, ++y);
 
     // some lines

@@ -71,11 +71,30 @@ jobs:
           name: KungFuSIDUpdater.prg
           path: updater/build/KungFuSIDUpdater.prg
 
+      - name: Build kfsid_prog PRG
+        run: |
+          cd kfsid_prog
+          make
+
+      - name: Verify kfsid_prog build output
+        run: |
+          if [ ! -f kfsid_prog/kfsid_prog.prg ]; then
+            echo "Build failed: kfsid_prog/kfsid_prog.prg not found."
+            exit 1
+          fi
+
+      - name: Upload kfsid_prog build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kfsid_prog.prg
+          path: kfsid_prog/kfsid_prog.prg
+
       - name: Package release assets
         run: |
           mkdir -p release_assets
           zip -r "release_assets/kungfusid-firmware-$VERSION.zip" firmware/build
           cp updater/build/KungFuSIDUpdater.prg "release_assets/KungFuSIDUpdater-$VERSION.prg"
+          cp kfsid_prog/kfsid_prog.prg "release_assets/kfsid_prog-$VERSION.prg"
 
       - name: Create GitHub Release
         id: create_release
@@ -108,4 +127,15 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: release_assets/KungFuSIDUpdater-${{ env.VERSION }}.prg
           asset_name: KungFuSIDUpdater-${{ env.VERSION }}.prg
+          asset_content_type: application/octet-stream
+
+
+      - name: Upload kfsid_prog to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/kfsid_prog-${{ env.VERSION }}.prg
+          asset_name: kfsid_prog-${{ env.VERSION }}.prg
           asset_content_type: application/octet-stream

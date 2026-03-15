@@ -60,11 +60,11 @@ eapi_obj := $(addprefix obj/,$(eapi))
 inc      := src
 inc      += eload/src
 inc      += libprint/src
-inc      += ../libs/libef3usb/src
+inc      += ../3rd_party/libef3usb/src
 
 eload     := eload/eload.lib
 libprint  := libprint/libprint.lib
-libef3usb := ../libs/libef3usb/libef3usb.lib
+libef3usb := ../3rd_party/libef3usb/libef3usb.lib
 
 INCLUDE  := $(addprefix -I,$(inc))
 
@@ -78,9 +78,9 @@ endif
 #
 .PHONY: all
 ifeq "$(release)" "yes"
-all: easyprog-$(version).zip
+all: kfsid_prog-$(version).zip
 else
-all: easyprog.prg
+all: kfsid_prog.prg
 endif
 
 ###############################################################################
@@ -120,22 +120,22 @@ obj/%.bin: src/%.s | obj
 obj:
 	mkdir -p $@
 
-easyprog: $(obj) $(ld_config) $(eload) $(libprint) $(libef3usb)
+kfsid_prog: $(obj) $(ld_config) $(eload) $(libprint) $(libef3usb)
 	ld65 -o $@ -m $@.map -C $(ld_config) $(obj) -L /usr/local/lib/cc65/lib \
 		--lib $(eload) --lib $(libprint) --lib $(libef3usb) --lib c64.lib
 	cat $@.map | grep -e "^Name\|^CODE\|^DATA\|^BSS\|^RODATA\|^LOWCODE"
 
-easyprog.prg: easyprog
+kfsid_prog.prg: kfsid_prog
 	exomizer sfx 0x080d -o $@ -q $^
 
-easyprog-$(version).zip: easyprog.prg CHANGES
-	rm -rf easyprog-$(version)
+kfsid_prog-$(version).zip: kfsid_prog.prg CHANGES
+	rm -rf kfsid_prog-$(version)
 	rm -f $@
-	mkdir easyprog-$(version)
-	cp easyprog.prg easyprog-$(version)/easyprog-$(version).prg
-	cp CHANGES easyprog-$(version)
-	cp IMPORTANT.txt easyprog-$(version)
-	zip -v -r $@ easyprog-$(version)
+	mkdir kfsid_prog-$(version)
+	cp kfsid_prog.prg kfsid_prog-$(version)/kfsid_prog-$(version).prg
+	cp CHANGES kfsid_prog-$(version)
+	cp IMPORTANT.txt kfsid_prog-$(version)
+	zip -v -r $@ kfsid_prog-$(version)
 
 $(eload): force
 	$(MAKE) -C $(dir $@)
@@ -151,7 +151,7 @@ force:
 
 .PHONY: clean
 clean:
-	rm -f easyprog easyprog.map easyprog.prg
+	rm -f kfsid_prog kfsid_prog.map kfsid_prog.prg
 	rm -rf obj
 	$(MAKE) -C $(dir $(eload)) clean
 	$(MAKE) -C $(dir $(libprint)) clean
