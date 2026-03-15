@@ -8,7 +8,7 @@
 
 #define KFSID_PARAM_FLASH_SECTOR   11U
 #define KFSID_PARAM_FLASH_ADDRESS  (0x080E0000U)
-#define KFSID_PARAM_FLASH_MAX_SIZE (128U * 1024U)
+#define KFSID_PARAM_FLASH_MAX_SIZE (2U * 1024U)
 
 const kungfusid_parameters_t kungfusid_default_parameters = {
     PARAM_LIST(DEFINE_PARAM)
