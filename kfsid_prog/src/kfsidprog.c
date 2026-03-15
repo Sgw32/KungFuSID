@@ -42,7 +42,6 @@
 #include "progress.h"
 #include "timer.h"
 #include "write.h"
-#include "torturetest.h"
 #include "filedlg.h"
 #include "slots.h"
 #include "sprites.h"
@@ -53,9 +52,11 @@
 
 /******************************************************************************/
 static void showAbout(void);
+static void showSIDConfig(void);
+static void showCheckVersion(void);
+static void showSIDTuneTest(void);
 static void toggleFastLoader(void);
 static uint8_t returnTrue(void);
-static uint8_t haveValidFlash(void);
 static uint8_t isEF3(void);
 static void updateFastLoaderText();
 
@@ -98,38 +99,20 @@ ScreenMenu menuMain =
     &menuOptions,
     {
         {
-            "&Write CRT to flash",
-            checkWriteCRTImage,
-            haveValidFlash,
-            0
-        },
-        {
-            "Write BIN to &LOROM",
-            checkWriteLOROMImage,
-            returnTrue,
-            0
-        },
-        {
-            "Write BIN to &HIROM",
-            checkWriteHIROMImage,
-            returnTrue,
-            0
-        },
-        {
             "&Update from BIN",
             checkWriteUpdateBIN,
             returnTrue,
             0
         },
         {
-            "Erase &all",
-            checkEraseAll,
+            "&SID Config",
+            showSIDConfig,
             returnTrue,
             0
         },
         {
-            "Erase &slot",
-            checkEraseSlot,
+            "Check &version",
+            showCheckVersion,
             returnTrue,
             0
         },
@@ -164,20 +147,20 @@ ScreenMenu menuExpert =
     &menuHelp,
     {
         {
-            "&Check flash type",
-            (void (*)(void)) checkFlashType,
-            returnTrue,
-            0
-        },
-        {
             "He&x viewer",
             hexViewer,
             returnTrue,
             0
         },
         {
-            "A&uto test + init",
+            "A&uto test",
             autoInit,
+            returnTrue,
+            0
+        },
+        {
+            "SID Tune &test",
+            showSIDTuneTest,
             returnTrue,
             0
         },
@@ -236,9 +219,9 @@ void refreshMainScreen(void)
     cputs("ptions  ");
 
     textcolor(COLOR_EXTRA);
-    cputc('E');
+    cputc('T');
     textcolor(COLOR_FOREGROUND);
-    cputs("xpert  ");
+    cputs("ools  ");
 
     textcolor(COLOR_EXTRA);
     cputc('H');
@@ -259,13 +242,8 @@ void refreshMainScreen(void)
     gotox(17);
     cputs(g_strFileName);
 
-    gotoxy(7, 6);
-    cputs("CRT Name:");
-    gotox(17);
-    cputs(g_strCartName);
-
     gotoxy(7, 8);
-    cputs("CRT Type:");
+    cputs("Package Type:");
     gotox(17);
     cputs(aStrInternalCartTypeName[internalCartType]);
 
@@ -275,7 +253,7 @@ void refreshMainScreen(void)
     cputs(pStrFlashDriver);
 
     gotoxy(10, 12);
-    cputs("Slots:");
+    cputs("Sectors:");
     gotox(17);
     cputs(strMemSize);
 
@@ -385,15 +363,6 @@ static uint8_t returnTrue(void)
 
 /******************************************************************************/
 /**
- * Return non-0 if the flash is okay and we have a driver which supports it.
- */
-static uint8_t haveValidFlash(void)
-{
-    return nManufacturerId | nDeviceId;
-}
-
-/******************************************************************************/
-/**
  * Return non-0 if the current device has KERNALs like the EF3.
  */
 static uint8_t isEF3(void)
@@ -402,19 +371,6 @@ static uint8_t isEF3(void)
            nDeviceId == FLASH_MX29LV640EB_DEV_ID;
 }
 
-/******************************************************************************/
-/**
- * Check if the RAM at $DF00 is okay.
- * If it is not okay, print an error message.
- */
-static void checkRAM(void)
-{
-    if (!tortureTestCheckRAM())
-    {
-        screenPrintSimpleDialog(apStrBadRAM);
-        refreshMainScreen();
-    }
-}
 
 
 /******************************************************************************/
@@ -426,6 +382,59 @@ static void showAbout(void)
     spritesShow();
     screenPrintSimpleDialog(apStrAbout);
     spritesOn(0);
+}
+
+
+/******************************************************************************/
+/**
+ * Show SID config stubs.
+ */
+static void showSIDConfig(void)
+{
+    static const char* apStrSIDConfig[] = {
+        "SID Config",
+        "",
+        "Check version",
+        "",
+        "Stub",
+        NULL
+    };
+
+    screenPrintSimpleDialog(apStrSIDConfig);
+}
+
+
+/******************************************************************************/
+/**
+ * Show check version stub.
+ */
+static void showCheckVersion(void)
+{
+    static const char* apStrCheckVersion[] = {
+        "Check version",
+        "",
+        "Stub",
+        NULL
+    };
+
+    screenPrintSimpleDialog(apStrCheckVersion);
+}
+
+
+/******************************************************************************/
+/**
+ * Show SID tune test stub.
+ */
+static void showSIDTuneTest(void)
+{
+    static const char* apStrSIDTuneTest[] = {
+        "SID Tune test",
+        "",
+        "Stub player",
+        NULL
+    };
+
+    screenPrintSimpleDialog(apStrSIDTuneTest);
 }
 
 
@@ -495,23 +504,8 @@ void resetCartInfo(void)
  */
 void execUSBCmd(const char* pStrUSBCmd)
 {
-    if (strcmp(pStrUSBCmd, "crt") == 0)
-    {
-        /*if (screenPrintDialog(apStrFlashFromUSB, BUTTON_ENTER | BUTTON_STOP) ==
-                BUTTON_ENTER)*/
-        {
-            checkWriteCRTImageFromUSB();
-            refreshMainScreen();
-        }
-        /*else
-        {
-            ef3usb_send_str("stop");
-        }*/
-    }
-    else
-    {
-        ef3usb_send_str("btyp");
-    }
+    (void) pStrUSBCmd;
+    ef3usb_send_str("btyp");
 }
 
 
@@ -544,9 +538,13 @@ int main(void)
     showAbout();
     refreshMainScreen();
 
-    checkFlashType();
-
-    checkRAM();
+    nManufacturerId = FLASH_MX29LV640EB_MFR_ID;
+    nDeviceId = FLASH_MX29LV640EB_DEV_ID;
+    nBanks = FLASH_NUM_BANKS;
+    g_nSlots = 1;
+    pStrFlashDriver = "stub";
+    updateMemSizeText();
+    refreshMainScreen();
 
     for (;;)
     {
@@ -565,7 +563,7 @@ int main(void)
                 execMenu(&menuOptions);
                 break;
 
-            case 'e':
+            case 't':
                 execMenu(&menuExpert);
                 break;
 
