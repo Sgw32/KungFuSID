@@ -175,9 +175,223 @@ void reset_SID()
   EnvelopeGenerator_reset(&gen3);
 }
 
+FORCE_INLINE uint32_t sid_noise_advance(uint32_t state, uint32_t steps, uint8_t *last_bit)
+{
+#if defined(__arm__) || defined(__thumb__)
+  uint32_t feedback = *last_bit;
+  uint32_t scratch;
+
+  __asm volatile (
+    "cmp %[steps], #0\n"
+    "beq 2f\n"
+    "1:\n"
+    "lsr %[feedback], %[state], #22\n"
+    "lsr %[scratch], %[state], #17\n"
+    "eor %[feedback], %[feedback], %[scratch]\n"
+    "ands %[feedback], %[feedback], #1\n"
+    "lsl %[state], %[state], #1\n"
+    "orr %[state], %[state], %[feedback]\n"
+    "subs %[steps], %[steps], #1\n"
+    "bne 1b\n"
+    "2:\n"
+    : [state] "+r" (state),
+      [steps] "+r" (steps),
+      [feedback] "+r" (feedback),
+      [scratch] "=&r" (scratch)
+    :
+    : "cc"
+  );
+
+  *last_bit = (uint8_t)feedback;
+  return state;
+#else
+  uint32_t feedback = *last_bit;
+
+  while (steps--) {
+    feedback = (((state >> 22) ^ (state >> 17)) & 0x1);
+    state = (state << 1) | feedback;
+  }
+
+  *last_bit = (uint8_t)feedback;
+  return state;
+#endif
+}
+
+FORCE_INLINE void sid_filter_iteration(int32_t *Vhp_ptr,
+                                       int32_t *Vbp_ptr,
+                                       int32_t *Vlp_ptr,
+                                       int32_t *w0_delta_t_ptr,
+                                       int32_t *dVbp_ptr,
+                                       int32_t *dVlp_ptr,
+                                       int32_t w0_ceil_dt_val,
+                                       int delta_t_step,
+                                       int32_t Q_1024_div_val,
+                                       int32_t volume_input)
+{
+#if defined(__arm__) || defined(__thumb__)
+  int32_t Vhp_val = *Vhp_ptr;
+  int32_t Vbp_val = *Vbp_ptr;
+  int32_t Vlp_val = *Vlp_ptr;
+  int32_t w0_delta_val = *w0_delta_t_ptr;
+  int32_t dVbp_val = *dVbp_ptr;
+  int32_t dVlp_val = *dVlp_ptr;
+  int32_t scratch;
+
+  __asm__ volatile (
+    "mul %[w0_delta], %[w0_const], %[step]\n"
+    "asr %[w0_delta], %[w0_delta], #6\n"
+
+    "mul %[dVbp], %[w0_delta], %[Vhp]\n"
+    "asr %[dVbp], %[dVbp], #14\n"
+    "sub %[Vbp], %[Vbp], %[dVbp]\n"
+
+    "mul %[dVlp], %[w0_delta], %[Vbp]\n"     /* <-- Vbp, not Vlp */
+    "asr %[dVlp], %[dVlp], #14\n"
+    "sub %[Vlp], %[Vlp], %[dVlp]\n"
+
+    "mul %[scratch], %[Vbp], %[Qdiv]\n"
+    "asr %[scratch], %[scratch], #10\n"
+    "sub %[scratch], %[scratch], %[Vlp]\n"
+    "sub %[scratch], %[scratch], %[Vin]\n"
+    "mov %[Vhp], %[scratch]\n"
+    : [Vbp] "+r" (Vbp_val),
+      [Vlp] "+r" (Vlp_val),
+      [Vhp] "+r" (Vhp_val),
+      [w0_delta] "=&r" (w0_delta_val),   /* was +r */
+      [dVbp]     "=&r" (dVbp_val),       /* was +r */
+      [dVlp]     "=&r" (dVlp_val),       /* was +r */
+      [scratch]  "=&r" (scratch)
+    : [w0_const] "r" (w0_ceil_dt_val),
+      [step]     "r" (delta_t_step),
+      [Qdiv]     "r" (Q_1024_div_val),
+      [Vin]      "r" (volume_input)
+    : /* no flags needed unless you rely on them */
+  );
+
+  *Vhp_ptr = Vhp_val;
+  *Vbp_ptr = Vbp_val;
+  *Vlp_ptr = Vlp_val;
+  *w0_delta_t_ptr = w0_delta_val;
+  *dVbp_ptr = dVbp_val;
+  *dVlp_ptr = dVlp_val;
+#else
+  int32_t w0_delta_val = (int32_t)(w0_ceil_dt_val * delta_t_step);
+  w0_delta_val >>= 6;
+  int32_t dVbp_val = (int32_t)(w0_delta_val * (*Vhp_ptr));
+  dVbp_val >>= 14;
+  int32_t dVlp_val = (int32_t)(w0_delta_val * (*Vbp_ptr));
+  dVlp_val >>= 14;
+
+  *Vbp_ptr -= dVbp_val;
+  *Vlp_ptr -= dVlp_val;
+  int32_t filtered = (int32_t)((*Vbp_ptr) * Q_1024_div_val);
+  filtered >>= 10;
+  *Vhp_ptr = filtered - (*Vlp_ptr) - volume_input;
+
+  *w0_delta_t_ptr = w0_delta_val;
+  *dVbp_ptr = dVbp_val;
+  *dVlp_ptr = dVlp_val;
+#endif
+}
+
+/**
+ * @brief Apply oscillator sync resets and triangle/ring modulation MSB tweaks.
+ */
+FORCE_INLINE void sid_update_sync_and_ringmod(void)
+{
+#if defined(__arm__) || defined(__thumb__)
+  uint32_t osc1 = OSC_1;
+  uint32_t osc2 = OSC_2;
+  uint32_t osc3 = OSC_3;
+  uint32_t msb1 = OSC_MSB_1;
+  uint32_t msb2 = OSC_MSB_2;
+  uint32_t msb3 = OSC_MSB_3;
+  const uint32_t sid4 = SID[4];
+  const uint32_t sid11 = SID[11];
+  const uint32_t sid18 = SID[18];
+  const uint32_t rise1 = MSB_Rising_1;
+  const uint32_t rise2 = MSB_Rising_2;
+  const uint32_t rise3 = MSB_Rising_3;
+  const uint32_t mask = 0x7fffff;
+
+  __asm volatile (
+    "tst %[sid4], #0x2\n"
+    "beq 0f\n"
+    "tst %[rise3], #0x2\n"
+    "beq 0f\n"
+    "and %[osc1], %[osc1], %[mask]\n"
+    "0:\n"
+    "tst %[sid11], #0x2\n"
+    "beq 1f\n"
+    "tst %[rise1], #0x2\n"
+    "beq 1f\n"
+    "and %[osc2], %[osc2], %[mask]\n"
+    "1:\n"
+    "tst %[sid18], #0x2\n"
+    "beq 2f\n"
+    "tst %[rise2], #0x2\n"
+    "beq 2f\n"
+    "and %[osc3], %[osc3], %[mask]\n"
+    "2:\n"
+    "tst %[sid4], #0x10\n"
+    "beq 3f\n"
+    "tst %[sid4], #0x4\n"
+    "beq 3f\n"
+    "eor %[msb1], %[msb1], %[msb3]\n"
+    "and %[msb1], %[msb1], #1\n"
+    "3:\n"
+    "tst %[sid11], #0x10\n"
+    "beq 4f\n"
+    "tst %[sid11], #0x4\n"
+    "beq 4f\n"
+    "eor %[msb2], %[msb2], %[msb1]\n"
+    "and %[msb2], %[msb2], #1\n"
+    "4:\n"
+    "tst %[sid18], #0x10\n"
+    "beq 5f\n"
+    "tst %[sid18], #0x4\n"
+    "beq 5f\n"
+    "eor %[msb3], %[msb3], %[msb2]\n"
+    "and %[msb3], %[msb3], #1\n"
+    "5:\n"
+    : [osc1] "+r" (osc1),
+      [osc2] "+r" (osc2),
+      [osc3] "+r" (osc3),
+      [msb1] "+r" (msb1),
+      [msb2] "+r" (msb2),
+      [msb3] "+r" (msb3)
+    : [sid4] "r" (sid4),
+      [sid11] "r" (sid11),
+      [sid18] "r" (sid18),
+      [rise1] "r" (rise1),
+      [rise2] "r" (rise2),
+      [rise3] "r" (rise3),
+      [mask] "r" (mask)
+    : "cc"
+  );
+
+  OSC_1 = osc1;
+  OSC_2 = osc2;
+  OSC_3 = osc3;
+  OSC_MSB_1 = (uint8_t)(msb1 & 0x1);
+  OSC_MSB_2 = (uint8_t)(msb2 & 0x1);
+  OSC_MSB_3 = (uint8_t)(msb3 & 0x1);
+#else
+  // SYNC (bit 0b10)
+  if ((SID[4] & 0b10 ) & MSB_Rising_3) OSC_1 = OSC_1 & 0x7fffff;
+  if ((SID[11] & 0b10 ) & MSB_Rising_1) OSC_2 = OSC_2 & 0x7fffff;
+  if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
+
+  // Triangle and ringmod
+  if ((SID[4] & 0b10100) == 0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
+  if ((SID[11] & 0b10100) == 0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
+  if ((SID[18] & 0b10100) == 0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
+#endif
+}
+
 /**
  * @brief Main emulator function which outputs to DAC
- * 
+ *
  */
 FORCE_INLINE void SID_emulator ()
 {
@@ -192,32 +406,20 @@ FORCE_INLINE void SID_emulator ()
     // noise_1
     OSC_noise_1 = OSC_noise_1 + multiplier * OSC_1_HiLo; // noise counter (
     OSC_bit19_1 = OSC_noise_1 >> 19 ; //  / 0x080000;// calculate how many missing rising edges of bit_19 since last irq (if any)
-    for (i = 0; i < OSC_bit19_1; i++) {
-      bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
-      pseudorandom_1 = pseudorandom_1 << 1;
-      pseudorandom_1 = bit_0_1 | pseudorandom_1;
-    }
+    pseudorandom_1 = sid_noise_advance(pseudorandom_1, OSC_bit19_1, &bit_0_1);
     OSC_noise_1 = OSC_noise_1 - (OSC_bit19_1 << 19); // * 0x080000); // no reset, keep lower 18bit
 
 
     // noise_2
     OSC_noise_2 = OSC_noise_2 + multiplier * OSC_2_HiLo; // noise counter (
     OSC_bit19_2 = OSC_noise_2 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-    for (i = 0; i < OSC_bit19_2; i++) {
-      bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
-      pseudorandom_2 = pseudorandom_2 << 1;
-      pseudorandom_2 = bit_0_2 | pseudorandom_2;
-    }
+    pseudorandom_2 = sid_noise_advance(pseudorandom_2, OSC_bit19_2, &bit_0_2);
     OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
 
     // noise_3
     OSC_noise_3 = OSC_noise_3 + multiplier * OSC_3_HiLo; // noise counter (
     OSC_bit19_3 = OSC_noise_3 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
-    for (i = 0; i < OSC_bit19_3; i++) {
-      bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
-      pseudorandom_3 = pseudorandom_3 << 1;
-      pseudorandom_3 = bit_0_3 | pseudorandom_3;
-    }
+    pseudorandom_3 = sid_noise_advance(pseudorandom_3, OSC_bit19_3, &bit_0_3);
     OSC_noise_3 = OSC_noise_3 - (OSC_bit19_3 << 19 ); //  * 0x080000); // no reset, keep lower 18bit
 
 
@@ -231,15 +433,8 @@ FORCE_INLINE void SID_emulator ()
     if ( (!OSC_MSB_Previous_3) & (OSC_MSB_3)) MSB_Rising_3 = 0b10; else MSB_Rising_3 = 0;
 
 
-    // SYNC (bit 0b10)
-    if ((SID[4] & 0b10 ) & MSB_Rising_3) OSC_1 = OSC_1 & 0x7fffff; // ANDing curent value of OSC with  0x7fffff  i get exact timing when sync happened, no matter of multiplier (and what's more important, what number is in OSC in this exact time)
-    if ((SID[11] & 0b10 ) & MSB_Rising_1) OSC_2 = OSC_2 & 0x7fffff;
-    if ((SID[18] & 0b10 ) & MSB_Rising_2) OSC_3 = OSC_3 & 0x7fffff;
-
-    //Triangle and ringmod
-    if ( (SID[4]&0b10100)==0b10100) OSC_MSB_1 = OSC_MSB_1 ^ OSC_MSB_3; // this one took really long time to figure it out. I tought OSC_MSB_1 =  OSC_MSB_3 and everything was wacky with ring modulation
-    if ( (SID[11]&0b10100)==0b10100) OSC_MSB_2 = OSC_MSB_2 ^ OSC_MSB_1; // TODO: see if it's exact on high frequencies
-    if ( (SID[18]&0b10100)==0b10100) OSC_MSB_3 = OSC_MSB_3 ^ OSC_MSB_2; // TODO: see what's faster, here or in triangle voice check
+    // SYNC (bit 0b10) along with triangle and ring modulation interactions
+    sid_update_sync_and_ringmod();
 
     waveform_switch_1 = SID[4]&0xF0;
     waveform_switch_2 = SID[11]&0xF0;
@@ -525,24 +720,18 @@ FORCE_INLINE void SID_emulator ()
       if (delta_t < delta_t_flt) {
         delta_t_flt = delta_t;
       }
-      // reSID:
-      // delta_t is converted to seconds given a 1MHz clock by dividing
-      // with 1 000 000. This is done in two operations to avoid integer
-      // multiplication overflow.
 
-      // reSID:
-      //// Calculate filter outputs.
-      //// Vhp = Vbp/Q - Vlp - Vi;
-      //// dVbp = -w0*Vhp*dt;
-      //// dVlp = -w0*Vbp*dt;
-      w0_delta_t = ((int32_t)(w0_ceil_dt * delta_t_flt) >> 6);
-
-      dVbp = ((int32_t)(w0_delta_t*Vhp) >> 14);
-      dVlp = ((int32_t)(w0_delta_t*Vbp) >> 14);
-
-      Vbp -= dVbp;
-      Vlp -= dVlp;
-      Vhp = ((int32_t)(Vbp * (Q_1024_div)) >> 10) - Vlp - Volume_filter_input; // i am not sure is this order is good. Maybe Vhp is calculated first, before Vbp and Vlp?
+      // reSID filter integrator core handled inside sid_filter_iteration()
+      sid_filter_iteration(&Vhp,
+                           &Vbp,
+                           &Vlp,
+                           &w0_delta_t,
+                           &dVbp,
+                           &dVlp,
+                           w0_ceil_dt,
+                           delta_t_flt,
+                           Q_1024_div,
+                           Volume_filter_input);
 
       delta_t -= delta_t_flt;
     }
