@@ -114,6 +114,10 @@ static inline void led_toggle(void)
 #define PAL_PHI2_INT        (PAL_PHI2_HIGH - 43)
 #define PAL_PHI2_LOW        149
 
+#define C16_PHI2_HIGH       109
+#define C16_PHI2_INT        (C16_PHI2_HIGH - 48)
+#define C16_PHI2_LOW        166
+
 #define C64_BUS_HANDLER(name)                                                   \
     C64_BUS_HANDLER_(name##_handler, name##_read_handler, name##_write_handler)
 
@@ -213,6 +217,37 @@ static void handler(void)                                                       
     PAL_VIC_DELAY_SHORT();      \
     __NOP();
 
+// C16/+4
+#define C16_PHI2_CPU_START      113
+#define C16_PHI2_WRITE_DELAY    145
+#define C16_PHI2_CPU_END        C16_PHI2_LOW
+
+#define C16_PHI2_VIC_START      20
+#define C16_PHI2_VIC_DELAY      37
+#define C16_PHI2_VIC_END        68
+
+#define C16_WRITE_DELAY()                               \
+    /* Wait for data to become ready on the data bus */ \
+    while (DWT->CYCCNT < C16_PHI2_WRITE_DELAY);
+
+#define C16_VIC_DELAY()                                 \
+    /* Wait for the control bus to become stable */     \
+    while (DWT->CYCCNT < C16_PHI2_VIC_DELAY);
+
+#define C16_VIC_DELAY_SHORT()   \
+    __NOP();                    \
+    __NOP();                    \
+    __NOP();                    \
+    __NOP();                    \
+    __NOP();                    \
+    __NOP();                    \
+    __NOP();                    \
+    __NOP();
+
+#define C16_CPU_VIC_DELAY()     \
+    C16_VIC_DELAY_SHORT();      \
+    __NOP();
+
 #define C64_NO_DELAY()
 
 #define C64_EARLY_CPU_VIC_HANDLER(name)                                         \
@@ -226,7 +261,8 @@ static void handler(void)                                                       
 
 #define C64_VIC_BUS_HANDLER(name)                                               \
     C64_VIC_BUS_HANDLER_(name##_ntsc_handler, NTSC, name)                       \
-    C64_VIC_BUS_HANDLER_(name##_pal_handler, PAL, name)
+    C64_VIC_BUS_HANDLER_(name##_pal_handler, PAL, name)                         \
+    C64_VIC_BUS_HANDLER_(name##_c16_handler, C16, name)
 
 #define C64_VIC_BUS_HANDLER_(handler, timing, name)                             \
     C64_VIC_BUS_HANDLER_EX__(handler,                                           \
@@ -237,7 +273,8 @@ static void handler(void)                                                       
 
 #define C64_VIC_BUS_HANDLER_EX(name)                                            \
     C64_VIC_BUS_HANDLER_EX_(name##_ntsc_handler, NTSC, name)                    \
-    C64_VIC_BUS_HANDLER_EX_(name##_pal_handler, PAL, name)
+    C64_VIC_BUS_HANDLER_EX_(name##_pal_handler, PAL, name)                      \
+    C64_VIC_BUS_HANDLER_EX_(name##_c16_handler, C16, name)
 
 #define C64_VIC_BUS_HANDLER_EX_(handler, timing, name)                          \
     C64_VIC_BUS_HANDLER_EX__(handler, timing##_CPU_VIC_DELAY(),                 \
@@ -247,7 +284,8 @@ static void handler(void)                                                       
 
 #define C64_C128_BUS_HANDLER(name)                                              \
     C64_C128_BUS_HANDLER_(name##_ntsc_handler, NTSC, name)                      \
-    C64_C128_BUS_HANDLER_(name##_pal_handler, PAL, name)
+    C64_C128_BUS_HANDLER_(name##_pal_handler, PAL, name)                        \
+    C64_C128_BUS_HANDLER_(name##_c16_handler, C16, name)
 
 #define C64_C128_BUS_HANDLER_(handler, timing, name)                            \
     C64_VIC_BUS_HANDLER_EX__(handler, timing##_CPU_VIC_DELAY(),                 \
@@ -338,9 +376,28 @@ void handler(void)                                                              
     /* Set TIM1_CC_IRQHandler vector */         \
     ((u32 *)0x00000000)[43] = (u32)(handler)
 
-static inline bool c64_is_ntsc(void)
+typedef enum
 {
-    return TIM1->CCR1 < 167;
+    C64_TIMING_NTSC,
+    C64_TIMING_PAL,
+    C64_TIMING_C16
+} c64_timing_t;
+
+static inline c64_timing_t c64_timing_get(void)
+{
+    u32 ccr1 = TIM1->CCR1;
+
+    if (ccr1 < 167)
+    {
+        return C64_TIMING_NTSC;
+    }
+
+    if (ccr1 > 178)
+    {
+        return C64_TIMING_C16;
+    }
+
+    return C64_TIMING_PAL;
 }
 
 /*************************************************

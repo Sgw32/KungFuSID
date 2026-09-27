@@ -196,3 +196,42 @@ static void configure_system(void)
 
     c64_interface_config();
 }
+
+static u16 adc_read_vdd_adc_pa4(void)
+{
+    // Disable EXTI4 (PA4) usage for menu button to avoid conflicts with ADC.
+    EXTI->IMR &= ~EXTI_IMR_MR4;
+    EXTI->PR = EXTI_PR_PR4;
+    NVIC_DisableIRQ(EXTI4_IRQn);
+
+    // Configure PA4 as analog input (ADC1_IN4)
+    MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODER4, GPIO_MODER_MODER4);
+    MODIFY_REG(GPIOA->PUPDR, GPIO_PUPDR_PUPD4, 0);
+
+    // Enable ADC1 clock
+    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+    __DSB();
+
+    // ADC prescaler /4 for stable sampling
+    MODIFY_REG(ADC->CCR, ADC_CCR_ADCPRE, ADC_CCR_ADCPRE_0);
+
+    // Set sample time for channel 4
+    MODIFY_REG(ADC1->SMPR2, ADC_SMPR2_SMP4, ADC_SMPR2_SMP4_2|ADC_SMPR2_SMP4_1);
+
+    // Regular sequence length = 1, first conversion is channel 4
+    MODIFY_REG(ADC1->SQR1, ADC_SQR1_L, 0);
+    MODIFY_REG(ADC1->SQR3, ADC_SQR3_SQ1, 4);
+
+    // Enable ADC
+    ADC1->CR2 |= ADC_CR2_ADON;
+
+    // Dummy conversion to stabilize
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+    while (!(ADC1->SR & ADC_SR_EOC));
+    (void)ADC1->DR;
+
+    // Actual conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+    while (!(ADC1->SR & ADC_SR_EOC));
+    return (u16)ADC1->DR;
+}

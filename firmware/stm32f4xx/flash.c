@@ -17,6 +17,11 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
+#include <stddef.h>
+#include "common.h"
+#include "stm32f4xx.h"
+#include "flash.h"
+
 #define FLASH_KEYR_KEY1     0x45670123
 #define FLASH_KEYR_KEY2     0xCDEF89AB
 
@@ -98,7 +103,7 @@ static void flash_program_byte(u8 *dest, u8 byte)
     flash_lock();
 }
 
-static void flash_sector_program(s8 sector, void *dest, void *src, size_t bytes)
+void flash_sector_program(s8 sector, void *dest, void *src, size_t bytes)
 {
     // Prevent anything executing from flash
     __disable_irq();

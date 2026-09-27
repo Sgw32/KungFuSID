@@ -121,6 +121,7 @@ static void c64_crt_config(void)
 /*************************************************
 * C64 clock input on PA8 (timer 1)
 * C64 clock is 0.985 MHz (PAL) / 1.023 MHz (NTSC)
+* C16/+4 clock is 0.886 MHz
 *************************************************/
 static void c64_clock_config()
 {
@@ -237,8 +238,8 @@ static void c64_interface(bool state)
     // Wait for a valid C64 clock signal
     while (valid_clock_count < 100)
     {
-        // NTSC: 161-164, PAL: 168-169
-        if (!(TIM1->SR & TIM_SR_CC1IF) || TIM1->CCR1 < 160 || TIM1->CCR1 > 170)
+        // NTSC: 161-164, PAL: 168-169, C16/+4: 188-190
+        if (!(TIM1->SR & TIM_SR_CC1IF) || TIM1->CCR1 < 160 || TIM1->CCR1 > 192)
         {
             valid_clock_count = 0;
         }
@@ -258,23 +259,34 @@ static void c64_interface(bool state)
     }
 
     led_on();
-    if (c64_is_ntsc())
+    switch (c64_timing_get())
     {
+    case C64_TIMING_NTSC:
         // NTSC timing
-        TIM1->CCR3 = NTSC_PHI2_INT;     // generate interrupt before phi2 is high
+        TIM1->CCR3 = NTSC_PHI2_INT;    // generate interrupt before phi2 is high
 
         // Abuse COMPx registers for better performance
-        DWT->COMP0 = NTSC_PHI2_HIGH;    // after phi2 is high
-        DWT->COMP1 = NTSC_PHI2_LOW;     // before phi2 is low
-    }
-    else
-    {
+        DWT->COMP0 = NTSC_PHI2_HIGH;   // after phi2 is high
+        DWT->COMP1 = NTSC_PHI2_LOW;    // before phi2 is low
+        break;
+
+    case C64_TIMING_C16:
+        // C16/+4 timing
+        TIM1->CCR3 = C16_PHI2_INT;     // generate interrupt before phi2 is high
+
+        // Abuse COMPx registers for better performance
+        DWT->COMP0 = C16_PHI2_HIGH;    // after phi2 is high
+        DWT->COMP1 = C16_PHI2_LOW;     // before phi2 is low
+        break;
+
+    default:
         // PAL timing
         TIM1->CCR3 = PAL_PHI2_INT;     // generate interrupt before phi2 is high
 
         // Abuse COMPx registers for better performance
         DWT->COMP0 = PAL_PHI2_HIGH;    // after phi2 is high
         DWT->COMP1 = PAL_PHI2_LOW;     // before phi2 is low
+        break;
     }
 
     c64_interface_enable_no_check();

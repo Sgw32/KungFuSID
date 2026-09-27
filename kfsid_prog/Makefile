@@ -1,0 +1,136 @@
+
+ifeq "$(release)" "yes"
+	version := 1.7.1
+else
+	version := $(shell date +%y%m%d-%H%M)
+endif
+
+# do not remove intermediate targets
+.SECONDARY:
+
+obj :=
+obj += obj/crt0.o
+obj += obj/autoinit.o
+obj += obj/texts.o
+obj += obj/torturetestasm.o
+obj += obj/startupbin.o
+obj += obj/spritesasm.o
+obj += obj/exostreamdecr1.o
+obj += obj/utilasm.o
+obj += obj/kfsidprog.o
+obj += obj/hwglue.o
+obj += obj/flash.o
+obj += obj/cart.o
+obj += obj/screen.o
+obj += obj/screenasm.o
+obj += obj/progress.o
+obj += obj/progressasm.o
+obj += obj/timerasm.o
+obj += obj/dir.o
+obj += obj/filedlg.o
+obj += obj/selectbox.o
+obj += obj/slots.o
+obj += obj/hex.o
+obj += obj/torturetest.o
+obj += obj/write.o
+obj += obj/usbtest.o
+obj += obj/util.o
+
+ld65_version := $(shell [ `ld65 -V 2>&1 | sed -e 's/\(ld65 V\)\([0-9\.]*\)\( .*\)/\2/g; q'` \< "2.13.9" ] && echo old)
+
+ifeq "$(ld65_version)" "old"
+        ld_config := src/ld.cfg
+else
+        ld_config := src/ld2.cfg
+endif
+
+bin_acme :=
+bin_acme += obj/startup.bin
+bin_acme += obj/sprites.bin
+
+inc      := src
+inc      += eload/src
+inc      += libprint/src
+inc      += ../3rd_party/libef3usb/src
+
+eload     := eload/eload.lib
+libprint  := libprint/libprint.lib
+libef3usb := ../3rd_party/libef3usb/libef3usb.lib
+
+INCLUDE  := $(addprefix -I,$(inc))
+
+DEFINE   := -DEFVERSION=\"${version}\"
+
+ifeq "$(debug)" "yes"
+DEFINE   += -DEFDEBUG
+endif
+
+###############################################################################
+#
+.PHONY: all
+ifeq "$(release)" "yes"
+all: kfsid_prog-$(version).zip
+else
+all: kfsid_prog.prg
+endif
+
+###############################################################################
+# Poor men's dependencies: Let all files depend from all header files
+#
+headers := $(foreach dir, $(inc), $(wildcard $(dir)/*.h))
+
+obj/%.s: src/%.c $(headers) | obj
+	cc65 -t c64 -T -O --static-locals $(INCLUDE) $(DEFINE) -o $@ $<
+
+###############################################################################
+obj/%.o: obj/%.s | obj
+	ca65 -t c64 -o $@ $<
+
+###############################################################################
+obj/%.o: src/%.s $(bin_acme) | obj
+	ca65 -t c64 -o $@ $<
+
+###############################################################################
+obj/%.bin: src/%.s | obj
+	acme -o $@ $<
+
+###############################################################################
+obj:
+	mkdir -p $@
+
+kfsid_prog: $(obj) $(ld_config) $(eload) $(libprint) $(libef3usb)
+	ld65 -o $@ -m $@.map -C $(ld_config) $(obj) -L /usr/local/lib/cc65/lib \
+		--lib $(eload) --lib $(libprint) --lib $(libef3usb) --lib c64.lib
+	cat $@.map | grep -e "^Name\|^CODE\|^DATA\|^BSS\|^RODATA\|^LOWCODE"
+
+kfsid_prog.prg: kfsid_prog
+	exomizer sfx 0x080d -o $@ -q $^
+
+kfsid_prog-$(version).zip: kfsid_prog.prg CHANGES
+	rm -rf kfsid_prog-$(version)
+	rm -f $@
+	mkdir kfsid_prog-$(version)
+	cp kfsid_prog.prg kfsid_prog-$(version)/kfsid_prog-$(version).prg
+	cp CHANGES kfsid_prog-$(version)
+	cp IMPORTANT.txt kfsid_prog-$(version)
+	zip -v -r $@ kfsid_prog-$(version)
+
+$(eload): force
+	$(MAKE) -C $(dir $@)
+
+$(libprint): force
+	$(MAKE) -C $(dir $@)
+
+$(libef3usb): force
+	$(MAKE) -C $(dir $@)
+
+.PHONY: force
+force:
+
+.PHONY: clean
+clean:
+	rm -f kfsid_prog kfsid_prog.map kfsid_prog.prg
+	rm -rf obj
+	$(MAKE) -C $(dir $(eload)) clean
+	$(MAKE) -C $(dir $(libprint)) clean
+

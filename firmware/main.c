@@ -24,15 +24,34 @@
 #include <string.h>
 #include "common.h"
 #include "memory.h"
+#include "firmware_update.h"
 #include "hal.c"
+#include "stm32f4xx/flash.c"
 #include "print.c"     
 #include "file_types.h"
+#include "firmware_update.c"
 #include "usid.c"
 #include "cartridge.c"
 #include "math.h"
 
 
 #define PI 3.14159259
+
+#define SID_VDD_ADC_THRESHOLD 2235U
+
+static void sid_configure_model_from_adc(void)
+{
+    u16 adc_value = adc_read_vdd_adc_pa4();
+
+    if (adc_value > SID_VDD_ADC_THRESHOLD)
+    {
+        sid_apply_model(MOS6581);
+    }
+    else
+    {
+        sid_apply_model(MOS8580);
+    }
+}
 
 
 /**
@@ -65,8 +84,15 @@ static void sid_clock_config()
  */
 void TIM2_IRQHandler(void) {
   TIM2->SR &= ~TIM_SR_UIF;
-  SID_emulator();
-  DAC->DHR12R2 = main_volume;
+  if (firmware_update_sound_enabled())
+  {
+    SID_emulator();
+    DAC->DHR12R2 = main_volume;
+  }
+  else
+  {
+    DAC->DHR12R2 = 0;
+  }
 }
 
 /**
@@ -79,7 +105,9 @@ int main(void)
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR |= DAC_CR_EN2; // Channel 2
     reset_SID();      
+    firmware_update_init();
     configure_system();
+    sid_configure_model_from_adc();
     sid_clock_config();
     crt_ptr = CRT_LAUNCHER_BANK;
     kff_init();
