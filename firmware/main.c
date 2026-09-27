@@ -27,7 +27,7 @@
 #include "firmware_update.h"
 #include "hal.c"
 #include "stm32f4xx/flash.c"
-#include "print.c"     
+#include "print.c"
 #include "file_types.h"
 #include "firmware_update.c"
 #include "usid.c"
@@ -54,6 +54,33 @@ static void sid_configure_model_from_adc(void)
 }
 
 
+static void adc_config(void)
+{
+    // Configure PA3 as analog input (ADC1_IN3)
+    MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODER3, GPIO_MODER_MODER3);
+    MODIFY_REG(GPIOA->PUPDR, GPIO_PUPDR_PUPD3, 0);
+
+    // Enable ADC1 clock
+    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+    __DSB();
+
+    // ADC prescaler /4 for stable sampling
+    MODIFY_REG(ADC->CCR, ADC_CCR_ADCPRE, ADC_CCR_ADCPRE_0);
+
+    // Set sample time for channel 3
+    MODIFY_REG(ADC1->SMPR2, ADC_SMPR2_SMP3, ADC_SMPR2_SMP3_2|ADC_SMPR2_SMP3_1);
+
+    // Regular sequence length = 1, first conversion is channel 3
+    MODIFY_REG(ADC1->SQR1, ADC_SQR1_L, 0);
+    MODIFY_REG(ADC1->SQR3, ADC_SQR3_SQ1, 3);
+
+    // Enable ADC
+    ADC1->CR2 |= ADC_CR2_ADON;
+
+    // Dummy conversion to stabilize
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+}
+
 /**
  * @brief Config DAC SID clock
  * @details Timer2 Prescaler :2; Preload = 55999; Actual Interrupt Time = 1 ms
@@ -63,7 +90,7 @@ static void sid_clock_config()
      // Enable TIM1 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     __DSB();
-    // period = 2 , clock = 2 MHz, 
+    // period = 2 , clock = 2 MHz,
     TIM2->PSC = 168/period;
     TIM2->ARR = multiplier-1;
     TIM2->EGR |= TIM_EGR_UG;
@@ -80,7 +107,7 @@ static void sid_clock_config()
 
 /**
  * @brief SID DAC and emulation IRQ handler
- * 
+ *
  */
 void TIM2_IRQHandler(void) {
   TIM2->SR &= ~TIM_SR_UIF;
@@ -97,32 +124,34 @@ void TIM2_IRQHandler(void) {
 
 /**
  * @brief main
- * 
- * @return int 
+ *
+ * @return int
  */
 int main(void)
 {
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
     DAC->CR |= DAC_CR_EN2; // Channel 2
-    reset_SID();      
+    reset_SID();
     firmware_update_init();
     configure_system();
     sid_configure_model_from_adc();
+    adc_config();
     sid_clock_config();
     crt_ptr = CRT_LAUNCHER_BANK;
     kff_init();
     C64_INSTALL_HANDLER(kff_handler);
     c64_enable();
-    
+
     /* PA5 Init  */
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     /* Set GPIO PUPD register */
-    GPIOA->PUPDR = (GPIOA->PUPDR & ~(0x03 << (2 * (0x1UL << GPIO_BSRR_BS5)))) | ((uint32_t)(0x00 << (2 * GPIO_BSRR_BS5)));  
+    GPIOA->PUPDR = (GPIOA->PUPDR & ~(0x03 << (2 * (0x1UL << GPIO_BSRR_BS5)))) | ((uint32_t)(0x00 << (2 * GPIO_BSRR_BS5)));
     /* Set GPIO MODE register */
-    GPIOA->MODER = (GPIOA->MODER & ~((uint32_t)(0x03 << (2 * GPIO_BSRR_BS5)))) | ((uint32_t)(0x03 << (2 * GPIO_BSRR_BS5)));  
+    GPIOA->MODER = (GPIOA->MODER & ~((uint32_t)(0x03 << (2 * GPIO_BSRR_BS5)))) | ((uint32_t)(0x03 << (2 * GPIO_BSRR_BS5)));
+
 
     while (true)
     {
-       
+
     }
 }

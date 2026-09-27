@@ -38,7 +38,7 @@
 
 #define USE_CHANNEL_1                     // uncomment, for testing (affect only volume, not the calculations)
 #define USE_CHANNEL_2                     // (but it will have effect on filter output in case of multiple voices is filtered)
-#define USE_CHANNEL_3                     // 
+#define USE_CHANNEL_3                     //
 
 
 
@@ -64,7 +64,7 @@ uint8_t multiplier  = 16;//                   ----   Can't autoconfig without an
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const uint8_t magic_number = F_CPU / 1000000 ; // PWM resolution - number of cycles in 1 uS (PWM resolution = period * magic_number) // keep as same as speed of microcontroller, in Mhz
-// at 72MHz there is 72 clock "ticks" in 1uS that drives counter of Timer1. It works with 128MHZ bluepill overclocked. It also works underclocked at 48MHz. 
+// at 72MHz there is 72 clock "ticks" in 1uS that drives counter of Timer1. It works with 128MHZ bluepill overclocked. It also works underclocked at 48MHz.
 // STM32duino boards have this as CYCLES_PER_MICROSECOND
 // STM32 boards have this as (F_CPU / 1000000)
 // TODO: It's a 8bit number, so maximum clock is 255. TODO: See if it brake stuff if it's 16bit number.
@@ -113,6 +113,7 @@ int32_t Volume_unfiltered = 0;
 int32_t Volume_filtered = 0;
 int32_t Volume_filter_input = 0;
 int32_t Volume_filter_output = 0;
+int32_t ext_input = 0;
 
 uint32_t i , j , k , l ; // i run out of names for temporary variables
 

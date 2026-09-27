@@ -9,9 +9,9 @@ static struct EnvelopeGenerator gen3;
 
 /**
  * @brief startup sound
- * 
+ *
  */
-void error_open_folder(void) 
+void error_open_folder(void)
 {
   reset_SID();
 }
@@ -19,9 +19,9 @@ void error_open_folder(void)
 
 /**
  * @brief Sets SID register
- * 
- * @param addr 
- * @param value 
+ *
+ * @param addr
+ * @param value
  */
 void setreg(uint8_t addr,uint8_t value)
 {
@@ -54,7 +54,7 @@ void setreg(uint8_t addr,uint8_t value)
         OSC_2_HiLo = (SID[7] + ( SID[8] << 8));
         break;
       case 8:
-        OSC_2_HiLo = (SID[7] + ( SID[8] << 8)); 
+        OSC_2_HiLo = (SID[7] + ( SID[8] << 8));
         break;
       case 9:
         PW_HiLo_voice_2 = SID[9] + ( (SID[10] & 0x0f) << 8);
@@ -130,7 +130,7 @@ void setreg(uint8_t addr,uint8_t value)
         break;
       case 23:
         FILTER_Resonance = ( (SID[23] >> 4 ) & 0x0f) ;; // 4bit // TODO
-        
+
         // The coefficient 1024 is dispensed of later by right-shifting 10 times
         // (2 ^ 10 = 1024).
         // _1024_div_Q = static_cast<sound_sample>(1024.0/(0.707 + 1.0*res/0x0f));
@@ -146,7 +146,7 @@ void setreg(uint8_t addr,uint8_t value)
 
 /**
  * @brief Resets SID state
- * 
+ *
  */
 
 void reset_SID()
@@ -155,20 +155,20 @@ void reset_SID()
   // detailed information: http://archive.6502.org/datasheets/mos_6581_sid.pdf
 
   // channel 1
-  OSC_1_HiLo            = 0;              // 0-65535      // 
-  PW_HiLo_voice_1       = 0;              // 0-4095       // 
+  OSC_1_HiLo            = 0;              // 0-65535      //
+  PW_HiLo_voice_1       = 0;              // 0-4095       //
   // channel 2
 
-  OSC_2_HiLo            = 0;              // 0-65535      // 
-  PW_HiLo_voice_2       = 0;              // 0-4095       // 
+  OSC_2_HiLo            = 0;              // 0-65535      //
+  PW_HiLo_voice_2       = 0;              // 0-4095       //
   // channel 3
-  OSC_3_HiLo            = 0;              // 0-65535      // 
-  PW_HiLo_voice_3       = 0;              // 0-4095       // 
+  OSC_3_HiLo            = 0;              // 0-65535      //
+  PW_HiLo_voice_3       = 0;              // 0-4095       //
 
   // other registers
-  FILTER_HiLo           = 0;              // 0-2047       // 
-  FILTER_Resonance      = 0;              // 0-15         // 
-  OFF3                  = 0;              // true/false   // 
+  FILTER_HiLo           = 0;              // 0-2047       //
+  FILTER_Resonance      = 0;              // 0-15         //
+  OFF3                  = 0;              // true/false   //
   memset(SID, 0, sizeof(SID));
   EnvelopeGenerator_reset(&gen1);
   EnvelopeGenerator_reset(&gen2);
@@ -177,10 +177,11 @@ void reset_SID()
 
 /**
  * @brief Main emulator function which outputs to DAC
- * 
+ *
  */
 FORCE_INLINE void SID_emulator ()
 {
+
     OSC_MSB_Previous_1 = OSC_MSB_1;
     OSC_MSB_Previous_2 = OSC_MSB_2;
     OSC_MSB_Previous_3 = OSC_MSB_3;
@@ -406,7 +407,7 @@ FORCE_INLINE void SID_emulator ()
     ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
     EnvelopeGenerator_clock_dt(&gen3,multiplier);
     ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
-    
+
     // finished calculations, time to set main volume
 
     // WaveformDA : 12bit     ( 0 -> 0x0fff  )
@@ -507,8 +508,10 @@ FORCE_INLINE void SID_emulator ()
         Volume_unfiltered = 0;
         break;
     }
-    Volume_filter_input = Volume_filtered;
-    Volume_filter_output = Volume_filtered; // in case filters are skipped
+    ext_input = (int32_t)ADC1->DR;
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+    Volume_filter_input = Volume_filter_input + ((SID[23]&0b1000) ? (ext_input << 7): 0);
+    Volume_filter_output = Volume_filtered + ((SID[23]&0b1000) ? 0: (ext_input << 7));; // in case filters are skipped
 
 #ifdef USE_FILTERS
     Volume_filter_input = (int32_t)(Volume_filter_input) >> 7; // lower it to 13bit
@@ -549,9 +552,11 @@ FORCE_INLINE void SID_emulator ()
 
     Volume_filter_output = 0;
 
-    Volume_filter_output = ((SID[24]&0b10000) ? Vlp : 0) + 
-                          ((SID[24]&0b100000) ? Vbp : 0) + 
-                          ((SID[24]&0b1000000) ? Vhp : 0);
+    Volume_filter_output = ((SID[24]&0b10000) ? Vlp : 0) +
+                          ((SID[24]&0b100000) ? Vbp : 0) +
+                          ((SID[24]&0b1000000) ? Vhp : 0) +
+                          ((SID[23]&0b1000) ? 0 : ext_input)
+                          ;
 
     Volume_filter_output = ((int32_t)(Volume_filter_output) << 7); // back to 20 bit
 
