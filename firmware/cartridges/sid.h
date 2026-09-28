@@ -202,8 +202,8 @@ uint8_t OSC3 = 0; // Register 27 - Oscilator output
 
 uint8_t OFF3 = 0; //Register 24, bit 7 . Disable voice 3 output
 uint8_t ENV3 = 0; // $D428
-uint8_t POTX = 0; // TODO
-uint8_t POTY = 0; // TODO
+volatile uint8_t POTX = 0;
+volatile uint8_t POTY = 0;
 
 
 uint16_t main_volume = 0;

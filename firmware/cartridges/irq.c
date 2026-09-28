@@ -653,8 +653,6 @@ FORCE_INLINE void SID_emulator ()
 
 
     ENV3 = (ADSR_volume_3) & 0xff; // ((Volume_3 + 0x80000) >> 12) & 0xff; // value for REG_28
-    SID[25] = POTX;
-    SID[26] = POTY;
     SID[27] = (WaveformDA_3 >> 4) & 0xff; //WaveformDA_3 - 12 bit
     SID[28] = ENV3;
 }

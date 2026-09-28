@@ -1,6 +1,7 @@
 #include "usid.h"
 
 #include "irq.c"
+#include "pot.c"
 
 void setup() {
 

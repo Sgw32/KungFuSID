@@ -134,6 +134,7 @@ int main(void)
     reset_SID();
     firmware_update_init();
     configure_system();
+    pot_init();
     sid_configure_model_from_adc();
     adc_config();
     sid_clock_config();
