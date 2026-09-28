@@ -7,6 +7,33 @@ static struct EnvelopeGenerator gen1;
 static struct EnvelopeGenerator gen2;
 static struct EnvelopeGenerator gen3;
 
+
+#define EXT_TEST_SINE_FREQ_HZ       1000U
+#define SID_EMULATOR_RATE_HZ        (1000000U / 20U)   // 50 kHz
+
+#define EXT_TEST_SINE_SAMPLES       (SID_EMULATOR_RATE_HZ / EXT_TEST_SINE_FREQ_HZ)
+#define EXT_TEST_SINE_AMPLITUDE     2047
+
+static uint32_t ext_test_sine_phase = 0;
+
+/*
+ * 50 samples, one complete sine period.
+ * Signed, centered around zero.
+ * Approximately +/-2047.
+ */
+static const int16_t ext_test_sine[EXT_TEST_SINE_SAMPLES] = {
+       0,   257,   509,   750,   976,
+    1183,  1366,  1522,  1647,  1738,
+    1793,  1811,  1793,  1738,  1647,
+    1522,  1366,  1183,   976,   750,
+     509,   257,     0,  -257,  -509,
+    -750,  -976, -1183, -1366, -1522,
+   -1647, -1738, -1793, -1811, -1793,
+   -1738, -1647, -1522, -1366, -1183,
+    -976,  -750,  -509,  -257,     0,
+     257,   509,   750,   976,  1183
+};
+
 /**
  * @brief startup sound
  *
@@ -181,6 +208,25 @@ void reset_SID()
  */
 FORCE_INLINE void SID_emulator ()
 {
+    // Keep local so the compiler can retain/propagate them in registers.
+    uint32_t temp11; // upper 12 bits of OSC_1
+    uint32_t temp12;
+    uint32_t temp13;
+    uint8_t waveform_switch_1 = 0; // 0-15, depending of waveform
+    uint8_t waveform_switch_2 = 0; // 0-15, depending of waveform
+    uint8_t waveform_switch_3 = 0; // 0-15, depending of waveform
+    int32_t Volume_unfiltered = 0;
+    int32_t Volume_filtered = 0;
+    int32_t Volume_filter_input = 0;
+    int32_t Volume_filter_output = 0;
+    int32_t ext_input = 0;
+    uint8_t MSB_Rising_1 = 0;
+    uint8_t MSB_Rising_2 = 0;
+    uint8_t MSB_Rising_3 = 0;
+    int32_t dVbp = 0;
+    int32_t  dVlp = 0;
+    int32_t  dVhp = 0;
+
 
     OSC_MSB_Previous_1 = OSC_MSB_1;
     OSC_MSB_Previous_2 = OSC_MSB_2;
@@ -510,7 +556,8 @@ FORCE_INLINE void SID_emulator ()
     }
     ext_input = (int32_t)ADC1->DR;
     ADC1->CR2 |= ADC_CR2_SWSTART;
-    Volume_filter_input = Volume_filter_input + ((SID[23]&0b1000) ? (ext_input << 7): 0);
+    Volume_filter_input = Volume_filtered + ((SID[23]&0b1000) ? (ext_input << 7): 0);
+
     Volume_filter_output = Volume_filtered + ((SID[23]&0b1000) ? 0: (ext_input << 7));; // in case filters are skipped
 
 #ifdef USE_FILTERS

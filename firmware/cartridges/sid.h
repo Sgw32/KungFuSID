@@ -105,16 +105,6 @@ int32_t Vhp = 0;
 int32_t Vbp = 0;
 int32_t Vlp = 0;
 
-int32_t dVbp = 0;
-int32_t  dVlp = 0;
-int32_t  dVhp = 0;
-
-int32_t Volume_unfiltered = 0;
-int32_t Volume_filtered = 0;
-int32_t Volume_filter_input = 0;
-int32_t Volume_filter_output = 0;
-int32_t ext_input = 0;
-
 uint32_t i , j , k , l ; // i run out of names for temporary variables
 
 static uint8_t SID[] = {                  //  array that hold values of SID registers
@@ -251,6 +241,11 @@ const uint16_t B4095 = 4095;         // B0000 0000 0000 0000 1111 1111 1111
 const uint16_t B4096 = 4096;         // B0000 0000 0000 0001 0000 0000 0000
 const uint16_t B2047 = 2047;         // B0000 0000 0000 0000 0111 1111 1111
 
+// #define max_OSC 16777216U   // B0001 0000 0000 0000 0000 0000 0000
+// #define OSC_MSB 2048U       // B0000 0000 0000 0000 1000 0000 0000
+// #define B4095 4095U
+// #define B4096 4096U
+// #define B2047 2047U
 
 uint8_t OSC_MSB_1; // Oscilator's MSB
 uint8_t OSC_MSB_2;
@@ -259,10 +254,6 @@ uint8_t OSC_MSB_3;
 uint8_t OSC_MSB_Previous_1 = 0;
 uint8_t OSC_MSB_Previous_2 = 0;
 uint8_t OSC_MSB_Previous_3 = 0;
-
-uint8_t MSB_Rising_1 = 0;
-uint8_t MSB_Rising_2 = 0;
-uint8_t MSB_Rising_3 = 0;
 
 uint32_t OSC_bit19_1 = 0;
 uint32_t OSC_bit19_2 = 0;
@@ -275,12 +266,6 @@ uint32_t OSC_noise_3 = 0;
 uint8_t OSC_bit19_Previous_1 = 0;
 uint8_t OSC_bit19_Previous_2 = 0;
 uint8_t OSC_bit19_Previous_3 = 0;
-
-uint32_t temp11; // upper 12 bits of OSC_1
-
-uint32_t temp12;
-
-uint32_t temp13;
 
 // internal SID registers
 uint8_t FILTER_Enable_switch = 0;
@@ -342,10 +327,6 @@ int16_t ADSR_volume_2 = 0; // 8bit ADSR volume // 256 different values of volume
 //ADSR 3
 int16_t ADSR_volume_3 = 0; // 8bit ADSR volume // 256 different values of volume
 
-
-uint8_t waveform_switch_1 = 0; // 0-15, depending of waveform
-uint8_t waveform_switch_2 = 0; // 0-15, depending of waveform
-uint8_t waveform_switch_3 = 0; // 0-15, depending of waveform
 //
 
 uint16_t WaveformDA_1 = 0; // 12bit Waveform DA
