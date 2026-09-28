@@ -48,10 +48,20 @@ static inline void pot_begin_measurement(void)
     TIM3->SR = ~(TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC1OF | TIM_SR_CC2OF);
     TIM3->CNT = 0;
 
+    /*
+     * Arm both capture channels before releasing the capacitors.  With a
+     * near-zero paddle resistance the pin can cross the input threshold in
+     * less time than the two peripheral writes used here.  Releasing first
+     * would intermittently miss that edge and turn a valid 0 into a timeout
+     * value of 255.
+     */
+    TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
+    TIM3->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
+    __DSB();
+
     /* AF2 releases both capacitors and routes their edges to TIM3 capture. */
     MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODER6 | GPIO_MODER_MODER7,
                 GPIO_MODER_MODER6_1 | GPIO_MODER_MODER7_1);
-    TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
 }
 
 void pot_init(void)
@@ -122,7 +132,6 @@ void TIM3_IRQHandler(void)
         if (pot_phase == POT_DISCHARGING)
         {
             pot_phase = POT_MEASURING;
-            TIM3->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
             pot_begin_measurement();
         }
         else
