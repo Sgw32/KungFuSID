@@ -23,6 +23,7 @@
  */
 
 #include <conio.h>
+#include <c64.h>
 #include <string.h>
 #include <stdlib.h>
 #include <peekpoke.h>
@@ -57,7 +58,7 @@
 #define KFSID_FW_REG                54301u
 #define KFSID_FW_START_MAGIC        0xA5
 #define KFSID_FW_START_ACK          0x5A
-#define KFSID_FW_END_ACK            0x5A
+#define KFSID_FW_END_ACK            0xE5
 #define KFSID_FW_SECTOR_SIZE        (16UL * 1024UL)
 #define KFSID_FW_WRITE_DELAY        8u
 #define KFSID_FW_DELAY_START        2000u
@@ -75,6 +76,15 @@ static uint16_t m_nAddress;
 static uint16_t m_nSize;
 static BankHeader bankHeader;
 
+static const char* apStrConfirmFirmwareUpdate[] =
+{
+    "Update KungFuSID firmware?",
+    "Do not switch off the C64.",
+    "Press <Stop> to cancel,",
+    "<Enter> to continue.",
+    NULL
+};
+
 
 static void fwDelayLoops(unsigned int loops)
 {
@@ -82,6 +92,12 @@ static void fwDelayLoops(unsigned int loops)
     for (i = 0; i < loops; ++i)
     {
     }
+}
+
+static void fwWaitFrames(uint8_t frames)
+{
+    while (frames--)
+        waitvsync();
 }
 
 static void fwWriteByte(uint8_t value)
@@ -169,6 +185,9 @@ static uint8_t fwSendUpdateSector(uint8_t sector, uint8_t* pHasData)
     }
 
     *pHasData = 1;
+
+    /* The device erases and programs flash after receiving the last byte. */
+    fwWaitFrames(90);
 
     for (attempt = 0; attempt < KFSID_FW_MAX_RETRIES; ++attempt)
     {
@@ -361,6 +380,39 @@ static uint8_t writeOpenFile(const char* pStrImageType)
     setStatus("Checking file");
 
     // make sure the right areas of the chip are erased
+    progressInit();
+    timerStart();
+    return CART_RV_OK;
+}
+
+/* Open an update image using the normal drive/easy-loader path, but do not
+ * show the cartridge-flash erase warning used by the other BIN writers. */
+static uint8_t writeOpenUpdateFile(void)
+{
+    uint8_t rv;
+
+    checkFlashType();
+    do
+    {
+        rv = fileDlg("BIN");
+        if (!rv)
+            return CART_RV_ERR;
+
+        rv = utilOpenFile(0);
+        if (rv == 1)
+            screenPrintSimpleDialog(apStrFileOpenError);
+    }
+    while (rv != OPEN_FILE_OK);
+
+    if (screenPrintDialog(apStrConfirmFirmwareUpdate,
+                          BUTTON_ENTER | BUTTON_STOP) != BUTTON_ENTER)
+    {
+        utilCloseFile();
+        return CART_RV_ERR;
+    }
+
+    refreshMainScreen();
+    setStatus("Checking update image");
     progressInit();
     timerStart();
     return CART_RV_OK;
@@ -614,7 +666,7 @@ void checkWriteUpdateBIN(void)
 {
     uint8_t sector = 0;
 
-    if (writeOpenFile("BIN") != CART_RV_OK)
+    if (writeOpenUpdateFile() != CART_RV_OK)
         return;
 
     setStatus("Starting updater protocol");

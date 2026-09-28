@@ -33,6 +33,7 @@ obj += obj/slots.o
 obj += obj/hex.o
 obj += obj/torturetest.o
 obj += obj/write.o
+obj += obj/params.o
 obj += obj/usbtest.o
 obj += obj/util.o
 

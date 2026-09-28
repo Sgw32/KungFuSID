@@ -48,6 +48,7 @@
 #include "sprites.h"
 #include "usbtest.h"
 #include "util.h"
+#include "params.h"
 
 #undef SHOW_HEAP_FREE
 
@@ -118,6 +119,12 @@ ScreenMenu menuMain =
         {
             "&Update from BIN",
             checkWriteUpdateBIN,
+            returnTrue,
+            0
+        },
+        {
+            "Edit &parameters",
+            editParameters,
             returnTrue,
             0
         },

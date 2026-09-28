@@ -16,7 +16,7 @@ uint8_t selectKERNALSlotDialog(void);
 uint8_t selectARSlotDialog(void);
 uint8_t __fastcall__ checkAskForSlot(void);
 void __fastcall__ slotSelect(uint8_t slot);
-void __fastcall__ slotSaveName(const char* name, char isKERNAL);
+void __fastcall__ slotSaveName(const char* name, uint8_t nKERNAL);
 void slotsEditDirectory(void);
 
 extern uint8_t g_nSelectedSlot;

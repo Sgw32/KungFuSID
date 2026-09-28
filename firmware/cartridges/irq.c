@@ -1,6 +1,7 @@
 #include "setup.h"
 #include "irq.h"
 #include "sid.h"
+#include "xparam_eeprom.h"
 #include "envelope.c"
 
 static struct EnvelopeGenerator gen1;
@@ -197,6 +198,7 @@ void reset_SID()
   FILTER_Resonance      = 0;              // 0-15         //
   OFF3                  = 0;              // true/false   //
   memset(SID, 0, sizeof(SID));
+  SID[24] = kungfusid_parameters.default_sid_volume.value & 0x0F;
   EnvelopeGenerator_reset(&gen1);
   EnvelopeGenerator_reset(&gen2);
   EnvelopeGenerator_reset(&gen3);
@@ -252,17 +254,17 @@ FORCE_INLINE void SID_emulator ()
     if (SID[4] & 0x08)
       OSC_1 = 0;
     else
-      OSC_1 = (OSC_1 + multiplier * OSC_1_HiLo) & 0xFFFFFF;
+      OSC_1 = (OSC_1 + SID_MULTIPLIER * OSC_1_HiLo) & 0xFFFFFF;
     if (SID[11] & 0x08)
       OSC_2 = 0;
     else
-      OSC_2 = (OSC_2 + multiplier * OSC_2_HiLo) & 0xFFFFFF;
+      OSC_2 = (OSC_2 + SID_MULTIPLIER * OSC_2_HiLo) & 0xFFFFFF;
     if (SID[18] & 0x08)
       OSC_3 = 0;
     else
-      OSC_3 = (OSC_3 + multiplier * OSC_3_HiLo) & 0xFFFFFF;
+      OSC_3 = (OSC_3 + SID_MULTIPLIER * OSC_3_HiLo) & 0xFFFFFF;
     // noise_1
-    OSC_noise_1 = OSC_noise_1 + multiplier * OSC_1_HiLo; // noise counter (
+    OSC_noise_1 = OSC_noise_1 + SID_MULTIPLIER * OSC_1_HiLo; // noise counter (
     OSC_bit19_1 = OSC_noise_1 >> 19 ; //  / 0x080000;// calculate how many missing rising edges of bit_19 since last irq (if any)
     for (i = 0; i < OSC_bit19_1; i++) {
       bit_0_1 = (( bitRead(pseudorandom_1, 22)   ) ^ ((bitRead(pseudorandom_1, 17 ) ) )  ) & 0x1;
@@ -273,7 +275,7 @@ FORCE_INLINE void SID_emulator ()
 
 
     // noise_2
-    OSC_noise_2 = OSC_noise_2 + multiplier * OSC_2_HiLo; // noise counter (
+    OSC_noise_2 = OSC_noise_2 + SID_MULTIPLIER * OSC_2_HiLo; // noise counter (
     OSC_bit19_2 = OSC_noise_2 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
     for (i = 0; i < OSC_bit19_2; i++) {
       bit_0_2 = (( bitRead(pseudorandom_2, 22)   ) ^ ((bitRead(pseudorandom_2, 17 ) ) )  ) & 0x1;
@@ -283,7 +285,7 @@ FORCE_INLINE void SID_emulator ()
     OSC_noise_2 = OSC_noise_2 - (OSC_bit19_2 << 19) ; // * 0x080000); // no reset, keep lower 18bits
 
     // noise_3
-    OSC_noise_3 = OSC_noise_3 + multiplier * OSC_3_HiLo; // noise counter (
+    OSC_noise_3 = OSC_noise_3 + SID_MULTIPLIER * OSC_3_HiLo; // noise counter (
     OSC_bit19_3 = OSC_noise_3 >> 19 ; // / 0x080000;// calculate how many missing rising edges of bit_19 since last irq
     for (i = 0; i < OSC_bit19_3; i++) {
       bit_0_3 = (( bitRead(pseudorandom_3, 22)   ) ^ ((bitRead(pseudorandom_3, 17 ) ) )  ) & 0x1;
@@ -471,11 +473,11 @@ FORCE_INLINE void SID_emulator ()
 
     // Increase LFSR15 counter for ADSR (scaled to match)
 
-    EnvelopeGenerator_clock_dt(&gen1,multiplier);
+    EnvelopeGenerator_clock_dt(&gen1,SID_MULTIPLIER);
     ADSR_volume_1 = EnvelopeGenerator_output(&gen1);
-    EnvelopeGenerator_clock_dt(&gen2,multiplier);
+    EnvelopeGenerator_clock_dt(&gen2,SID_MULTIPLIER);
     ADSR_volume_2 = EnvelopeGenerator_output(&gen2);
-    EnvelopeGenerator_clock_dt(&gen3,multiplier);
+    EnvelopeGenerator_clock_dt(&gen3,SID_MULTIPLIER);
     ADSR_volume_3 = EnvelopeGenerator_output(&gen3);
 
     // finished calculations, time to set main volume
@@ -592,7 +594,7 @@ FORCE_INLINE void SID_emulator ()
     // Maximum delta cycles for the filter to work satisfactorily under current
     // cutoff frequency and resonance constraints is approximately 8.
 
-    delta_t = multiplier;
+    delta_t = SID_MULTIPLIER;
     delta_t_flt = FILTER_SENSITIVITY;
 
     while (delta_t) {
@@ -649,6 +651,7 @@ FORCE_INLINE void SID_emulator ()
     main_volume_32bit = (main_volume_32bit) >> 3; // 28-12 = 16bit
     main_volume_32bit = (main_volume_32bit *  (SID[24]&0x0F)); //16+4 =20bit MASTER_VOLUME
     main_volume_32bit = (main_volume_32bit) >> 9; // 28-12 = 16bit
+    main_volume_32bit = (main_volume_32bit * sid_output_gain_percent) / 100;
     main_volume = main_volume_32bit;
 
 

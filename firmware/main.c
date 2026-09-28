@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2019-2022 Kim Jørgensen
+ * Copyright (c) 2019-2022 Kim Jorgensen
  *
  * This software is provided 'as-is', without any express or implied
- * warranty.  In no event will the authors be held liable for any damages
+ * warranty. In no event will the authors be held liable for any damages
  * arising from the use of this software.
  *
  * Permission is granted to anyone to use this software for any purpose,
@@ -24,19 +24,20 @@
 #include <string.h>
 #include "common.h"
 #include "memory.h"
-#include "firmware_update.h"
+#include "kfsid_protocol.h"
+#include "xparam_eeprom.h"
 #include "hal.c"
 #include "stm32f4xx/flash.c"
 #include "print.c"
 #include "file_types.h"
-#include "firmware_update.c"
+#include "xparam.c"
+#include "xparam_eeprom.c"
+#include "kfsid_protocol.c"
 #include "usid.c"
 #include "cartridge.c"
 #include "math.h"
 
-
 #define PI 3.14159259
-
 #define SID_VDD_ADC_THRESHOLD 2235U
 
 static void sid_configure_model_from_adc(void)
@@ -53,106 +54,83 @@ static void sid_configure_model_from_adc(void)
     }
 }
 
-
 static void adc_config(void)
 {
-    // Configure PA3 as analog input (ADC1_IN3)
+    /* Configure PA3 as analog input (ADC1_IN3). */
     MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODER3, GPIO_MODER_MODER3);
     MODIFY_REG(GPIOA->PUPDR, GPIO_PUPDR_PUPD3, 0);
 
-    // Enable ADC1 clock
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
     __DSB();
 
-    // ADC prescaler /4 for stable sampling
     MODIFY_REG(ADC->CCR, ADC_CCR_ADCPRE, ADC_CCR_ADCPRE_0);
-
-    // Set sample time for channel 3
-    MODIFY_REG(ADC1->SMPR2, ADC_SMPR2_SMP3, ADC_SMPR2_SMP3_2|ADC_SMPR2_SMP3_1);
-
-    // Regular sequence length = 1, first conversion is channel 3
+    MODIFY_REG(ADC1->SMPR2, ADC_SMPR2_SMP3,
+               ADC_SMPR2_SMP3_2 | ADC_SMPR2_SMP3_1);
     MODIFY_REG(ADC1->SQR1, ADC_SQR1_L, 0);
     MODIFY_REG(ADC1->SQR3, ADC_SQR3_SQ1, 3);
 
-    // Enable ADC
     ADC1->CR2 |= ADC_CR2_ADON;
-
-    // Dummy conversion to stabilize
     ADC1->CR2 |= ADC_CR2_SWSTART;
 }
 
-/**
- * @brief Config DAC SID clock
- * @details Timer2 Prescaler :2; Preload = 55999; Actual Interrupt Time = 1 ms
- */
-static void sid_clock_config()
+static void sid_clock_config(void)
 {
-     // Enable TIM1 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     __DSB();
-    // period = 2 , clock = 2 MHz,
-    TIM2->PSC = 168/period;
-    TIM2->ARR = multiplier-1;
+
+    TIM2->PSC = 168 / period;
+    TIM2->ARR = SID_MULTIPLIER - 1;
     TIM2->EGR |= TIM_EGR_UG;
-    // Enable TIM1_CC_IRQn, highest priority
+
     NVIC_SetPriority(TIM2_IRQn, 2);
     NVIC_EnableIRQ(TIM2_IRQn);
-    // Enable counter
+
     TIM2->SR &= ~TIM_SR_UIF;
-    //Enable the hardware interrupt.
     TIM2->DIER |= TIM_DIER_UIE;
-    //Enable the timer.
     TIM2->CR1 |= TIM_CR1_CEN;
 }
 
-/**
- * @brief SID DAC and emulation IRQ handler
- *
- */
-void TIM2_IRQHandler(void) {
-  TIM2->SR &= ~TIM_SR_UIF;
-  if (firmware_update_sound_enabled())
-  {
-    SID_emulator();
-    DAC->DHR12R2 = main_volume;
-  }
-  else
-  {
-    DAC->DHR12R2 = 0;
-  }
+void TIM2_IRQHandler(void)
+{
+    TIM2->SR &= ~TIM_SR_UIF;
+    if (kfsid_protocol_audio_enabled())
+    {
+        SID_emulator();
+        DAC->DHR12R2 = main_volume;
+    }
+    else
+    {
+        DAC->DHR12R2 = 0;
+    }
 }
 
-/**
- * @brief main
- *
- * @return int
- */
 int main(void)
 {
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-    DAC->CR |= DAC_CR_EN2; // Channel 2
-    reset_SID();
-    firmware_update_init();
+    DAC->CR |= DAC_CR_EN2;
+
     configure_system();
+    kfsid_params_init();
+    reset_SID();
+    kfsid_protocol_init();
     pot_init();
     sid_configure_model_from_adc();
     adc_config();
     sid_clock_config();
+
     crt_ptr = CRT_LAUNCHER_BANK;
     kff_init();
     C64_INSTALL_HANDLER(kff_handler);
     c64_enable();
 
-    /* PA5 Init  */
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    /* Set GPIO PUPD register */
-    GPIOA->PUPDR = (GPIOA->PUPDR & ~(0x03 << (2 * (0x1UL << GPIO_BSRR_BS5)))) | ((uint32_t)(0x00 << (2 * GPIO_BSRR_BS5)));
-    /* Set GPIO MODE register */
-    GPIOA->MODER = (GPIOA->MODER & ~((uint32_t)(0x03 << (2 * GPIO_BSRR_BS5)))) | ((uint32_t)(0x03 << (2 * GPIO_BSRR_BS5)));
-
-
     while (true)
     {
-
+        if (kfsid_protocol_restart_pending())
+        {
+            /* Let the C64 finish the final ACK bus cycle, then reboot only
+             * KungFuSID. system_restart() also asserts the C64 reset line. */
+            delay_ms(50);
+            NVIC_SystemReset();
+        }
     }
 }
