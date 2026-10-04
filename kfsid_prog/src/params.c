@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "params.h"
+#include "screen.h"
 
 #define KFSID_PROTOCOL_REG              54301u /* $D41D */
 #define KFSID_PARAM_START_MAGIC         0xC1
@@ -17,6 +18,7 @@
 #define KFSID_PARAM_CMD_SAVE            0x13
 #define KFSID_PARAM_CMD_LOAD_DEFAULT    0x14
 #define KFSID_PARAM_CMD_GET_INFO        0x15
+#define KFSID_PARAM_CMD_GET_VERSION     0x16
 #define KFSID_PARAM_CMD_END             0x1F
 #define KFSID_PARAM_STATUS_OK           0x00
 
@@ -35,6 +37,9 @@ typedef struct
 
 static ParamEntry params[PARAM_MAX_COUNT];
 static uint8_t paramCount;
+
+char g_kfsidDeviceState[16] = "Unchecked";
+char g_kfsidInstalledVersion[17] = "--";
 
 static void protocolWrite(uint8_t value)
 {
@@ -75,6 +80,22 @@ static void paramSessionEnd(void)
 {
     protocolWrite(KFSID_PARAM_CMD_END);
     (void)(protocolRead() == KFSID_PARAM_END_ACK);
+}
+
+static uint8_t paramLoadVersion(void)
+{
+    uint8_t i;
+    uint8_t length;
+
+    protocolWrite(KFSID_PARAM_CMD_GET_VERSION);
+    length = protocolRead();
+    if (length == 0 || length >= sizeof(g_kfsidInstalledVersion))
+        return 0;
+
+    for (i = 0; i < length; ++i)
+        g_kfsidInstalledVersion[i] = (char)protocolRead();
+    g_kfsidInstalledVersion[length] = '\0';
+    return 1;
 }
 
 static uint8_t paramLoadInfo(uint8_t index, ParamEntry* entry)
@@ -134,6 +155,87 @@ static uint8_t paramLoadTable(void)
             return 0;
     }
     return 1;
+}
+
+uint8_t refreshDeviceInfo(void)
+{
+    if (!paramSessionStart())
+    {
+        strcpy(g_kfsidDeviceState, "Not detected");
+        strcpy(g_kfsidInstalledVersion, "--");
+        return 0;
+    }
+
+    if (!paramLoadVersion())
+    {
+        /* The first parameter-protocol firmware did not expose a version.
+         * End the session so its updater protocol remains available. */
+        paramSessionEnd();
+        strcpy(g_kfsidDeviceState, "Legacy firmware");
+        strcpy(g_kfsidInstalledVersion, "Unknown");
+        return 1;
+    }
+
+    paramSessionEnd();
+    strcpy(g_kfsidDeviceState, "Ready");
+    return 1;
+}
+
+void checkDeviceInfo(void)
+{
+    const char* lines[4];
+    char versionLine[32];
+
+    (void)refreshDeviceInfo();
+    strcpy(versionLine, "Firmware: ");
+    strcat(versionLine, g_kfsidInstalledVersion);
+    lines[0] = "KungFuSID status";
+    lines[1] = g_kfsidDeviceState;
+    lines[2] = versionLine;
+    lines[3] = NULL;
+    screenPrintSimpleDialog(lines);
+}
+
+void autoTestDevice(void)
+{
+    uint8_t i;
+    uint8_t passed = 1;
+    const char* lines[5];
+    char countLine[24];
+
+    if (!paramSessionStart())
+    {
+        strcpy(g_kfsidDeviceState, "Not detected");
+        passed = 0;
+    }
+    else if (!paramLoadVersion() || !paramLoadTable())
+    {
+        paramSessionEnd();
+        strcpy(g_kfsidDeviceState, "Protocol error");
+        passed = 0;
+    }
+    else
+    {
+        for (i = 0; i < paramCount; ++i)
+        {
+            if (params[i].value < params[i].minimum ||
+                params[i].value > params[i].maximum || params[i].step == 0)
+            {
+                passed = 0;
+                break;
+            }
+        }
+        paramSessionEnd();
+        strcpy(g_kfsidDeviceState, passed ? "Ready" : "Parameter error");
+    }
+
+    sprintf(countLine, "Parameters checked: %u", passed ? paramCount : 0);
+    lines[0] = passed ? "Auto test passed" : "Auto test failed";
+    lines[1] = g_kfsidDeviceState;
+    lines[2] = countLine;
+    lines[3] = "No flash data was changed.";
+    lines[4] = NULL;
+    screenPrintSimpleDialog(lines);
 }
 
 static void paramMessage(const char* message)

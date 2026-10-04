@@ -31,7 +31,6 @@
 
 #include "screen.h"
 #include "texts.h"
-#include "sprites.h"
 #include "util.h"
 
 #include "kfsidprog.h"

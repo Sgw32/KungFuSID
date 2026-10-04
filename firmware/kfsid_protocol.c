@@ -49,6 +49,10 @@ static const u8 fw_end_sequence_length = sizeof(fw_end_sequence) - 1;
 #define PARAM_STREAM_MAX       46U
 #define PARAM_NAME_MAX         31U
 
+/* Kept in the firmware image so kfsid_prog can identify a BIN before it is
+ * flashed. The same version string is available through the live protocol. */
+static const char kfsid_firmware_identity[] = "KFSIDFW:" VERSION;
+
 static kfsid_mode_t kfsid_mode = KFSID_MODE_IDLE;
 
 static volatile bool protocol_busy = false;
@@ -198,6 +202,24 @@ static void param_begin_info_stream(u8 index)
     protocol_set_pending_read(param_stream_data[0], PARAM_STATE_STREAM_DATA);
 }
 
+static void param_begin_version_stream(void)
+{
+    const char* version = kfsid_firmware_identity + 8;
+    size_t length = strlen(version);
+
+    if (length > PARAM_NAME_MAX)
+    {
+        length = PARAM_NAME_MAX;
+    }
+
+    param_stream_data[0] = (u8)length;
+    memcpy(&param_stream_data[1], version, length);
+    param_stream_length = (u8)(length + 1U);
+    param_stream_index = 0;
+    param_state = PARAM_STATE_STREAM_DATA;
+    protocol_set_pending_read(param_stream_data[0], PARAM_STATE_STREAM_DATA);
+}
+
 static void param_handle_command(u8 value)
 {
     switch (value)
@@ -210,6 +232,9 @@ static void param_handle_command(u8 value)
         break;
     case KFSID_PARAM_CMD_GET_INFO:
         param_state = PARAM_STATE_WAIT_PARAM_INDEX_INFO;
+        break;
+    case KFSID_PARAM_CMD_GET_VERSION:
+        param_begin_version_stream();
         break;
     case KFSID_PARAM_CMD_SET_VALUE:
         param_state = PARAM_STATE_WAIT_PARAM_INDEX_SET;

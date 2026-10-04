@@ -10,31 +10,20 @@ endif
 
 obj :=
 obj += obj/crt0.o
-obj += obj/autoinit.o
 obj += obj/texts.o
-obj += obj/torturetestasm.o
-obj += obj/startupbin.o
-obj += obj/spritesasm.o
 obj += obj/exostreamdecr1.o
 obj += obj/utilasm.o
 obj += obj/kfsidprog.o
 obj += obj/hwglue.o
-obj += obj/flash.o
-obj += obj/cart.o
 obj += obj/screen.o
 obj += obj/screenasm.o
 obj += obj/progress.o
-obj += obj/progressasm.o
 obj += obj/timerasm.o
 obj += obj/dir.o
 obj += obj/filedlg.o
 obj += obj/selectbox.o
-obj += obj/slots.o
-obj += obj/hex.o
-obj += obj/torturetest.o
 obj += obj/write.o
 obj += obj/params.o
-obj += obj/usbtest.o
 obj += obj/util.o
 
 ld65_version := $(shell [ `ld65 -V 2>&1 | sed -e 's/\(ld65 V\)\([0-9\.]*\)\( .*\)/\2/g; q'` \< "2.13.9" ] && echo old)
@@ -44,10 +33,6 @@ ifeq "$(ld65_version)" "old"
 else
         ld_config := src/ld2.cfg
 endif
-
-bin_acme :=
-bin_acme += obj/startup.bin
-bin_acme += obj/sprites.bin
 
 inc      := src
 inc      += eload/src
@@ -88,12 +73,8 @@ obj/%.o: obj/%.s | obj
 	ca65 -t c64 -o $@ $<
 
 ###############################################################################
-obj/%.o: src/%.s $(bin_acme) | obj
+obj/%.o: src/%.s | obj
 	ca65 -t c64 -o $@ $<
-
-###############################################################################
-obj/%.bin: src/%.s | obj
-	acme -o $@ $<
 
 ###############################################################################
 obj:

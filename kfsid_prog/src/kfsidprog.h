@@ -44,19 +44,8 @@
 #  define debug_hex_padded(x,y) do {} while(0)
 #endif
 
-// If this flag is set in a menu entry, it needs a known flash type
-#define EASYPROG_MENU_FLAG_NEEDS_FLASH 1
-
-#define EF_CART_NAME_LEN 16
-
 extern uint8_t g_bFastLoaderEnabled;
-extern char g_strCartName[EF_CART_NAME_LEN + 1];
-
-
-uint8_t checkFlashType(void);
 void __fastcall__ setStatus(const char* pStrStatus);
 void refreshMainScreen(void);
-void refreshElapsedTime(void);
-void resetCartInfo(void);
 
 #endif /* EASYPROG_H_ */
