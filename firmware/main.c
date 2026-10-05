@@ -34,6 +34,8 @@
 #include "xparam_eeprom.c"
 #include "kfsid_protocol.c"
 #include "usid.c"
+#include "cartridges/ay3_backend.c"
+#include "cartridges/emulator_backend.c"
 #include "cartridge.c"
 #include "math.h"
 
@@ -95,7 +97,7 @@ void TIM2_IRQHandler(void)
     TIM2->SR &= ~TIM_SR_UIF;
     if (kfsid_protocol_audio_enabled())
     {
-        SID_emulator();
+        emulator_backend_cycle_handler();
         DAC->DHR12R2 = main_volume;
     }
     else
@@ -111,7 +113,7 @@ int main(void)
 
     configure_system();
     kfsid_params_init();
-    reset_SID();
+    emulator_backend_init();
     kfsid_protocol_init();
     pot_init();
     sid_configure_model_from_adc();

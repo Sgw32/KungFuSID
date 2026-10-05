@@ -3,14 +3,14 @@
 #include "irq.c"
 #include "pot.c"
 
-void setup() {
-
-    InitHardware(); // 2_setup.ino  (start SID emulator)
-    reset_SID(); // in 6_barebone_sounds.ino
+void setup(void)
+{
+    InitHardware(); // Start the SID-compatible emulator hardware.
+    emulator_backend_reset();
 }
 
 void delay(int i)
 {
-
+    (void)i;
 }
 

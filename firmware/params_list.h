@@ -8,6 +8,16 @@ extern "C" {
 #define PARAM_LIST(PARAM) \
     PARAM( \
         U8, \
+        emulator_backend, \
+        .p_name = "emulator_backend", \
+        .p_info = "0=SID, 1=AY3; active after restart", \
+        .min = 0, \
+        .max = 1, \
+        .step_size = 1, \
+        .value = 0, \
+    ) \
+    PARAM( \
+        U8, \
         multiplier, \
         .p_name = "multiplier", \
         .p_info = "SID emulation interval (us)", \

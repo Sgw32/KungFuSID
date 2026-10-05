@@ -1,6 +1,7 @@
 #include "setup.h"
 #include "irq.h"
 #include "sid.h"
+#include "emulator_backend.h"
 #include "xparam_eeprom.h"
 #include "envelope.c"
 
@@ -41,7 +42,7 @@ static const int16_t ext_test_sine[EXT_TEST_SINE_SAMPLES] = {
  */
 void error_open_folder(void)
 {
-  reset_SID();
+  emulator_backend_reset();
 }
 
 
@@ -208,7 +209,7 @@ void reset_SID()
  * @brief Main emulator function which outputs to DAC
  *
  */
-FORCE_INLINE void SID_emulator ()
+void SID_emulator(void)
 {
     // Keep local so the compiler can retain/propagate them in registers.
     uint32_t temp11; // upper 12 bits of OSC_1

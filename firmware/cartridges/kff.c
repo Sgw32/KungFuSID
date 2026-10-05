@@ -19,6 +19,7 @@
  */
 #include "sid.h"
 #include "kfsid_protocol.h"
+#include "emulator_backend.h"
 #define KFF_BUF (CRT_DAT_BANK(0))
 #define KFF_RAM (CRT_RAM_BUF)
 #define KFF_ID_VALUE 0x2a
@@ -78,7 +79,7 @@ FORCE_INLINE void kff_write_handler(u32 control, u32 addr, u32 data)
             return;
         }
         led_toggle();
-        setreg(register_addr, data);
+        emulator_backend_write(register_addr, data);
 	}
 }
 

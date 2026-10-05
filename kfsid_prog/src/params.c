@@ -351,7 +351,7 @@ void editParameters(void)
             paramMessage("Saving parameters...");
             paramWaitForFlash();
             if (protocolRead() == KFSID_PARAM_STATUS_OK)
-                paramMessage("Parameters saved");
+                paramMessage("Saved; backend changes after restart");
             else
                 paramMessage("Parameter save failed");
             break;
