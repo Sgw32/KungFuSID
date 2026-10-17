@@ -33,3 +33,5 @@ build/
 *.exe
 *.out
 *.app
+
+firmware/amiga_samples/amiga_simulator

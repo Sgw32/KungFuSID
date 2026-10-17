@@ -34,6 +34,8 @@
 #include "xparam_eeprom.c"
 #include "kfsid_protocol.c"
 #include "usid.c"
+#include "amiga_sample_bank.c"
+#include "cartridges/amiga_backend.c"
 #include "cartridges/ay3_backend.c"
 #include "cartridges/emulator_backend.c"
 #include "cartridge.c"
@@ -113,6 +115,7 @@ int main(void)
 
     configure_system();
     kfsid_params_init();
+    amiga_sample_bank_init();
     emulator_backend_init();
     kfsid_protocol_init();
     pot_init();

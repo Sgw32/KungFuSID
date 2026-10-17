@@ -6,6 +6,7 @@
 #include "flash.h"
 #include "stm32f4xx.h"
 #include "xparam_eeprom.h"
+#include "amiga_sample_bank.h"
 
 #define FW_UPDATE_SECTOR_COUNT 4
 #define FW_UPDATE_SECTOR_SIZE  (16 * 1024)
@@ -14,6 +15,7 @@ typedef enum
 {
     KFSID_MODE_IDLE = 0,
     KFSID_MODE_FIRMWARE_UPDATE,
+    KFSID_MODE_SAMPLE_BANK,
     KFSID_MODE_PARAM,
 } kfsid_mode_t;
 
@@ -27,6 +29,21 @@ typedef enum
     FW_STATE_WAIT_CHECKSUM_READ,
     FW_STATE_WAIT_END_READ,
 } kfsid_fw_state_t;
+
+typedef enum
+{
+    BANK_STATE_WAIT_START_READ = 0,
+    BANK_STATE_SIZE0,
+    BANK_STATE_SIZE1,
+    BANK_STATE_SIZE2,
+    BANK_STATE_SIZE3,
+    BANK_STATE_WAIT_READY_READ,
+    BANK_STATE_WRITE_DATA,
+    BANK_STATE_WAIT_CHECKSUM_READ,
+    BANK_STATE_WAIT_END,
+    BANK_STATE_WAIT_END_READ,
+    BANK_STATE_WAIT_ERROR_READ,
+} bank_state_t;
 
 typedef enum
 {
@@ -67,6 +84,14 @@ static u32 fw_buffer_offset = 0;
 static u32 fw_buffer_count = 0;
 static u8 fw_end_sequence_index = 0;
 
+static bank_state_t bank_state = BANK_STATE_WAIT_START_READ;
+static bank_state_t bank_next_state = BANK_STATE_WAIT_START_READ;
+static uint32_t bank_size = 0;
+static uint32_t bank_offset = 0;
+static uint16_t bank_buffer_count = 0;
+static uint8_t bank_checksum = 0;
+static bool bank_finish_restart = false;
+
 static param_state_t param_state = PARAM_STATE_WAIT_START_READ;
 static param_state_t param_next_state = PARAM_STATE_WAIT_START_READ;
 static uint16_t param_index = 0;
@@ -84,10 +109,34 @@ static void protocol_set_pending_read(u8 value, u8 next_state)
     {
         fw_next_state = (kfsid_fw_state_t)next_state;
     }
+    else if (kfsid_mode == KFSID_MODE_SAMPLE_BANK)
+    {
+        bank_next_state = (bank_state_t)next_state;
+    }
     else if (kfsid_mode == KFSID_MODE_PARAM)
     {
         param_next_state = (param_state_t)next_state;
     }
+}
+
+static void bank_start_update(void)
+{
+    protocol_busy = true;
+    kfsid_mode = KFSID_MODE_SAMPLE_BANK;
+    bank_state = BANK_STATE_WAIT_START_READ;
+    bank_size = 0;
+    bank_offset = 0;
+    bank_buffer_count = 0;
+    bank_checksum = 0;
+    bank_finish_restart = false;
+    protocol_set_pending_read(KFSID_BANK_START_ACK, BANK_STATE_SIZE0);
+}
+
+static void bank_error(void)
+{
+    bank_finish_restart = false;
+    bank_state = BANK_STATE_WAIT_ERROR_READ;
+    protocol_set_pending_read(KFSID_BANK_ERROR, BANK_STATE_WAIT_ERROR_READ);
 }
 
 static void fw_reset_buffer_state(void)
@@ -275,11 +324,17 @@ void kfsid_protocol_init(void)
     param_value = 0;
     param_stream_length = 0;
     param_stream_index = 0;
+    bank_state = BANK_STATE_WAIT_START_READ;
+    bank_size = 0;
+    bank_offset = 0;
+    bank_buffer_count = 0;
+    bank_finish_restart = false;
 }
 
 bool kfsid_protocol_audio_enabled(void)
 {
-    return kfsid_mode != KFSID_MODE_FIRMWARE_UPDATE;
+    return kfsid_mode != KFSID_MODE_FIRMWARE_UPDATE &&
+           kfsid_mode != KFSID_MODE_SAMPLE_BANK;
 }
 
 bool kfsid_protocol_restart_pending(void)
@@ -298,6 +353,74 @@ void kfsid_protocol_write(u8 value)
         else if (value == KFSID_PARAM_START_MAGIC)
         {
             param_start_session();
+        }
+        else if (value == KFSID_BANK_START_MAGIC)
+        {
+            bank_start_update();
+        }
+        return;
+    }
+
+    if (kfsid_mode == KFSID_MODE_SAMPLE_BANK)
+    {
+        if (bank_state == BANK_STATE_SIZE0)
+        {
+            bank_size = value;
+            bank_state = BANK_STATE_SIZE1;
+        }
+        else if (bank_state == BANK_STATE_SIZE1)
+        {
+            bank_size |= (uint32_t)value << 8;
+            bank_state = BANK_STATE_SIZE2;
+        }
+        else if (bank_state == BANK_STATE_SIZE2)
+        {
+            bank_size |= (uint32_t)value << 16;
+            bank_state = BANK_STATE_SIZE3;
+        }
+        else if (bank_state == BANK_STATE_SIZE3)
+        {
+            bank_size |= (uint32_t)value << 24;
+            if (!amiga_sample_bank_upload_begin(bank_size))
+                bank_error();
+            else
+            {
+                bank_state = BANK_STATE_WAIT_READY_READ;
+                protocol_set_pending_read(KFSID_BANK_READY, BANK_STATE_WRITE_DATA);
+            }
+        }
+        else if (bank_state == BANK_STATE_WRITE_DATA)
+        {
+            dat_buffer[bank_buffer_count++] = value;
+            bank_checksum ^= value;
+            if (bank_buffer_count == 256U)
+            {
+                uint32_t remaining = bank_size - bank_offset;
+                uint32_t write_bytes = remaining < 256U ? remaining : 256U;
+                if (!amiga_sample_bank_upload_write(bank_offset, dat_buffer,
+                                                     write_bytes))
+                    bank_error();
+                else
+                {
+                    bank_offset += write_bytes;
+                    bank_buffer_count = 0;
+                    bank_state = BANK_STATE_WAIT_CHECKSUM_READ;
+                    protocol_set_pending_read(bank_checksum,
+                        bank_offset >= bank_size ? BANK_STATE_WAIT_END : BANK_STATE_WRITE_DATA);
+                    bank_checksum = 0;
+                }
+            }
+        }
+        else if (bank_state == BANK_STATE_WAIT_END && value == KFSID_BANK_END_MAGIC)
+        {
+            if (!amiga_sample_bank_upload_finish())
+                bank_error();
+            else
+            {
+                bank_finish_restart = true;
+                bank_state = BANK_STATE_WAIT_END_READ;
+                protocol_set_pending_read(KFSID_BANK_END_ACK, BANK_STATE_WAIT_END_READ);
+            }
         }
         return;
     }
@@ -458,6 +581,19 @@ void kfsid_protocol_consume(void)
             protocol_busy = false;
             protocol_restart_pending = true;
             fw_update_state = FW_STATE_IDLE;
+            kfsid_mode = KFSID_MODE_IDLE;
+        }
+        return;
+    }
+
+    if (kfsid_mode == KFSID_MODE_SAMPLE_BANK)
+    {
+        bank_state = bank_next_state;
+        if (bank_state == BANK_STATE_WAIT_END_READ ||
+            bank_state == BANK_STATE_WAIT_ERROR_READ)
+        {
+            protocol_busy = false;
+            protocol_restart_pending = bank_finish_restart;
             kfsid_mode = KFSID_MODE_IDLE;
         }
         return;

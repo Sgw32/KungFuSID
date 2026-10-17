@@ -23,6 +23,7 @@ obj += obj/dir.o
 obj += obj/filedlg.o
 obj += obj/selectbox.o
 obj += obj/write.o
+obj += obj/bank.o
 obj += obj/params.o
 obj += obj/util.o
 

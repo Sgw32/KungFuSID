@@ -21,6 +21,7 @@ OPT = -Os #-Og
 #######################################
 # Build path
 BUILD_DIR = build
+AMIGA_BANK = amiga_samples/selected_16/KungFuSID_Amiga_16.ksb
 
 ######################################
 # source
@@ -142,8 +143,9 @@ $(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf | $(BUILD_DIR)
 $(BUILD_DIR)/$(TARGET)_mem.bin: $(BUILD_DIR)/$(TARGET).bin | $(BUILD_DIR)
 	@cat $(BUILD_DIR)/$(TARGET).bin > $@
 
-$(BUILD_DIR)/$(TARGET)_all.bin: $(BUILD_DIR)/$(TARGET).bin | $(BUILD_DIR)
-	@cat $(BUILD_DIR)/$(TARGET).bin > $@
+$(BUILD_DIR)/$(TARGET)_all.bin: $(BUILD_DIR)/$(TARGET).bin $(AMIGA_BANK) | $(BUILD_DIR)
+	$(CP) -I binary -O binary --gap-fill 0xFF --pad-to 0x20000 $< $@
+	@cat $(AMIGA_BANK) >> $@
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -158,7 +160,7 @@ debug: all
 # burn flash
 #######################################
 burn: all
-	@st-flash write $(BUILD_DIR)/$(TARGET).bin 0x8000000
+	@st-flash write $(BUILD_DIR)/$(TARGET)_all.bin 0x8000000
 	@#dfu-util -a 0 -s 0x08000000 -D $(BUILD_DIR)/$(TARGET).bin
 
 mem: $(BUILD_DIR)/$(TARGET)_mem.bin

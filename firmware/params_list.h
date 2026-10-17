@@ -10,9 +10,9 @@ extern "C" {
         U8, \
         emulator_backend, \
         .p_name = "emulator_backend", \
-        .p_info = "0=SID, 1=AY3; active after restart", \
+        .p_info = "0=SID, 1=AY3, 2=Amiga; restart", \
         .min = 0, \
-        .max = 1, \
+        .max = 2, \
         .step_size = 1, \
         .value = 0, \
     ) \

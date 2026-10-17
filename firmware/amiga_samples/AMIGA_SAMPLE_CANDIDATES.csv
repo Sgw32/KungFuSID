@@ -1,0 +1,65 @@
+id,pack,file,path,file_bytes,pcm_bytes,sha256_12,container,native_rate_hz,loop_metadata,family,playback,source_hint,notes
+01,ST-02,linnkick,ST-02/linnkick,538,538,DD4B6A8DA712,RAW,unknown,unknown,KICK,one_shot,Linn label,Very small classic kick candidate
+02,ST-74,d50-abdrum1,ST-74/d50-abdrum1,5020,5020,4B4B7DA61CFF,RAW,unknown,unknown,KICK,one_shot,Roland D-50 label,Acoustic-style bass drum candidate
+03,ST-A5,d50-kicktom,ST-A5/d50-kicktom,2408,2304,BEE5CAC04C9E,8SVX,16726,none,KICK_TOM,one_shot,Roland D-50 label,Embedded one-shot length 2304
+04,ST-74,d50-xbdrumc2,ST-74/d50-xbdrumc2,5066,5066,5475E430955C,RAW,unknown,unknown,KICK,one_shot,Roland D-50 label,Longer kick candidate
+05,ST-74,dy77-dxbdrum,ST-74/dy77-dxbdrum,3810,3810,AFD306BBBFEC,RAW,unknown,unknown,KICK,one_shot,Yamaha DY/DX label,Equipment spelling is filename-derived
+06,ST-74,dx-shrbdruma1,ST-74/dx-shrbdruma1,1392,1392,C014BD738CB2,RAW,unknown,unknown,KICK,one_shot,Yamaha DX label,Short bass drum
+07,ST-A5,d50-Snaredrum,ST-A5/d50-Snaredrum,6684,6580,7969005DEBFD,8SVX,16726,none,SNARE,one_shot,Roland D-50 label,Embedded one-shot length 6580
+08,ST-51,steel-d50snare,ST-51/steel-d50snare,2074,1970,01C7B760B8C5,8SVX,8363,none,SNARE,one_shot,Roland D-50 label,Short steel-set snare
+09,ST-74,d50-wsnare1,ST-74/d50-wsnare1,3584,3584,DD65F27CFFA3,RAW,unknown,unknown,SNARE,one_shot,Roland D-50 label,Alternate snare
+10,ST-74,dx-shrsnarec1,ST-74/dx-shrsnarec1,2048,2048,E9318EA40213,RAW,unknown,unknown,SNARE,one_shot,Yamaha DX label,Short snare
+11,ST-74,dx-shrclapsnare,ST-74/dx-shrclapsnare,2128,2128,F231D0778A6A,RAW,unknown,unknown,CLAP_SNARE,one_shot,Yamaha DX label,Hybrid clap/snare
+12,ST-74,d50-xclaps5,ST-74/d50-xclaps5,4172,4172,1C7B3F1B6A9F,RAW,unknown,unknown,CLAP,one_shot,Roland D-50 label,Clap candidate
+13,ST-A5,d50-Hihat,ST-A5/d50-Hihat,1678,1574,E2A62AE6CE91,8SVX,16726,none,HAT_CLOSED,one_shot,Roland D-50 label,Embedded one-shot length 1574
+14,ST-51,steel-d50hihat,ST-51/steel-d50hihat,1502,1398,A65A5FD76652,8SVX,8363,none,HAT_CLOSED,one_shot,Roland D-50 label,Closed-hat candidate
+15,ST-51,steel-d50hihatopen,ST-51/steel-d50hihatopen,3840,3736,7C812E68E7D0,8SVX,8363,none,HAT_OPEN,one_shot,Roland D-50 label,Open-hat candidate
+16,ST-74,d50-phihat2,ST-74/d50-phihat2,908,908,88A107B1C407,RAW,unknown,unknown,HAT_CLOSED,one_shot,Roland D-50 label,Very compact hat
+17,ST-74,dx-xhihat2,ST-74/dx-xhihat2,1280,1280,DA45981BF74B,RAW,unknown,unknown,HAT_CLOSED,one_shot,Yamaha DX label,Closed-hat alternative
+18,ST-74,dx-xhihop2,ST-74/dx-xhihop2,5020,5020,3AA015A376E5,RAW,unknown,unknown,HAT_OPEN,one_shot,Yamaha DX label,Open-hat alternative
+19,ST-A5,d50-Shaker,ST-A5/d50-Shaker,2006,1902,8424D8B30D4C,8SVX,16726,none,SHAKER,one_shot,Roland D-50 label,Embedded one-shot length 1902
+20,ST-74,dx-xtom,ST-74/dx-xtom,2928,2928,17CEDA770B7C,RAW,unknown,unknown,TOM,one_shot,Yamaha DX label,Tonal drum for pitch-sweep testing
+21,ST-01,DXBass,ST-01/DXBass,2700,2700,1791BC2C7192,RAW,unknown,unknown,BASS_HARD,loop_candidate,Yamaha DX label,Compact FM-bass candidate
+22,ST-01,KorgBass,ST-01/KorgBass,4000,4000,316723D6C5F1,RAW,unknown,unknown,BASS_HARD,loop_candidate,Korg label,Compact synth bass
+23,ST-02,MiniMoog,ST-02/MiniMoog,6100,6100,064AF9C67136,RAW,unknown,unknown,BASS_SOFT,loop_candidate,Moog Minimoog label,Analog bass candidate
+24,ST-60,ffjunobass,ST-60/ffjunobass,1670,1670,8B02C0A6406D,RAW,unknown,unknown,BASS_HARD,loop_candidate,Roland Juno label,Very compact Juno-labelled bass
+25,ST-43,d50synthbass,ST-43/d50synthbass,10288,10240,289854476EC9,8SVX,10000,start9970 length270,BASS_HARD,loop,Roland D-50 label,Embedded short sustain loop
+26,ST-43,d50dumpfsynthbass,ST-43/d50dumpfsynthbass,10204,10156,6B2198F5F03D,8SVX,10000,start5814 length4342,BASS_SOFT,loop,Roland D-50 label,Long embedded sustain loop
+27,ST-43,d50bassguitar,ST-43/d50bassguitar,10288,10240,0C9110B796DC,8SVX,10000,start5358 length4882,BASS_GUITAR,loop,Roland D-50 label,Embedded sustain loop
+28,ST-74,d50-slapbass,ST-74/d50-slapbass,2484,2484,690771DBEF8A,RAW,unknown,unknown,BASS_SLAP,one_shot_or_loop,Roland D-50 label,Slap transient candidate
+29,ST-74,dx-xslapbass2,ST-74/dx-xslapbass2,2712,2712,4B1062ED4F1B,RAW,unknown,unknown,BASS_SLAP,one_shot_or_loop,Yamaha DX label,FM slap-bass alternative
+30,ST-96,deep_moogss2eps,ST-96/deep_moogss2eps,3480,3376,8B7610608A2A,8SVX,16726,none,BASS_SOFT,loop_candidate,Moog label,No embedded loop despite sustained role
+31,ST-44,d50lead1,ST-44/d50lead1,12336,12288,0F4394D97578,8SVX,10000,start12198 length90,LEAD,loop,Roland D-50 label,Tiny embedded loop needs audition
+32,ST-74,dx-trumpetc6,ST-74/dx-trumpetc6,10002,10002,66103CEC14AD,RAW,unknown,unknown,BRASS,loop_candidate,Yamaha DX label,Pitch C6 appears in filename
+33,ST-74,dx-rtrumpet,ST-74/dx-rtrumpet,5748,5748,3830015B8EA6,RAW,unknown,unknown,BRASS,loop_candidate,Yamaha DX label,Trumpet alternative
+34,ST-94,lead.junobrass,ST-94/lead.junobrass,4164,4060,5FCD99B47D65,8SVX,16726,start0 length4060,BRASS,loop,Roland Juno label,Whole-body loop metadata
+35,ST-94,lead.korg31,ST-94/lead.korg31,11860,11756,ACD1B024A0E2,8SVX,16726,start1722 length10034,LEAD,loop,Korg label,Long embedded loop
+36,ST-45,d50chiff,ST-45/d50chiff,7272,7272,5EAA0E36C748,RAW,unknown,unknown,WOODWIND,loop_candidate,Roland D-50 label,Chiff/attack-heavy candidate
+37,ST-74,d50-hsax,ST-74/d50-hsax,2966,2966,C9D0BBF62E28,RAW,unknown,unknown,WOODWIND,loop_candidate,Roland D-50 label,Compact sax candidate
+38,ST-74,dx-saxc2,ST-74/dx-saxc2,6980,6980,6FEDFF0189CE,RAW,unknown,unknown,WOODWIND,loop_candidate,Yamaha DX label,Pitch C2 appears in filename
+39,ST-74,dx-saxtrumpetc5,ST-74/dx-saxtrumpetc5,8052,8052,902ACB81EAAE,RAW,unknown,unknown,BRASS_WOODWIND,loop_candidate,Yamaha DX label,Hybrid sax/trumpet
+40,ST-A6,korg15.short,ST-A6/korg15.short,6042,5938,DA0D0B3688ED,8SVX,16726,none,LEAD,one_shot_or_loop,Korg label,Short synth candidate
+41,ST-45,d50fantasia,ST-45/d50fantasia,7992,7992,F9509758DFEE,RAW,unknown,unknown,PAD,loop_candidate,Roland D-50 label,Characteristic D-50-style pad label
+42,ST-74,d50-strings1,ST-74/d50-strings1,8736,8736,CE5F56A86948,RAW,unknown,unknown,STRINGS,loop_candidate,Roland D-50 label,String candidate
+43,ST-51,steel-d50string,ST-51/steel-d50string,9616,9512,188FDD103D25,8SVX,8363,start6904 length2608,STRINGS,loop,Roland D-50 label,Embedded sustain loop
+44,ST-51,steel-d50shortstring,ST-51/steel-d50shortstring,11770,11666,52980726BF84,8SVX,8363,none,STRINGS,one_shot_or_loop,Roland D-50 label,No embedded loop
+45,ST-44,d50synthchoir,ST-44/d50synthchoir,15408,15360,0832AB4E6AC5,8SVX,10000,start5754 length9606,CHOIR,loop,Roland D-50 label,Long embedded sustain loop
+46,ST-74,d50-voistr1,ST-74/d50-voistr1,10612,10612,7A4DBF4E2301,RAW,unknown,unknown,CHOIR_STRINGS,loop_candidate,Roland D-50 label,Voice/string hybrid
+47,ST-13,CZSTRING,ST-13/CZSTRING,9826,9826,BA7BD72ABC91,RAW,unknown,unknown,STRINGS,loop_candidate,Casio CZ label,CZ-style string candidate
+48,ST-B0,casio-9.1strsus,ST-B0/casio-9.1strsus,9358,9254,6AA98B87F876,8SVX,16726,start2134 length7062,STRINGS,loop,Casio label,Embedded sustain loop
+49,ST-74,dx-xstr003.min,ST-74/dx-xstr003.min,3236,3236,F2B087A46242,RAW,unknown,unknown,STRINGS_CHORD,one_shot,Yamaha DX label,Minor chord rather than single-note instrument
+50,ST-74,d50-ocheststr1,ST-74/d50-ocheststr1,16384,16384,40FCC99CDBEC,RAW,unknown,unknown,STRINGS,loop_candidate,Roland D-50 label,Largest candidate; orchestral strings
+51,ST-44,d50synthbell_mid,ST-44/d50synthbell_mid,9008,8960,862EFE754E0A,8SVX,10000,start8598 length362,BELL,loop,Roland D-50 label,Short embedded tail loop
+52,ST-51,steel-d50bellvoice,ST-51/steel-d50bellvoice,8090,7986,F91743201A4B,8SVX,8363,none,BELL,one_shot,Roland D-50 label,Bell/voice candidate
+53,ST-01,Marimba,ST-01/Marimba,8000,8000,21B18414E9C8,RAW,unknown,unknown,MALLET,one_shot_or_loop,Generic marimba label,Mallet candidate without equipment claim
+54,ST-44,d50flute1,ST-44/d50flute1,6192,6144,96C906FA06AC,8SVX,10000,start5896 length248,WOODWIND,loop,Roland D-50 label,Short embedded tail loop
+55,ST-74,dx-rrpiano1.min,ST-74/dx-rrpiano1.min,1584,1584,5838E21D973E,RAW,unknown,unknown,PIANO_CHORD,one_shot,Yamaha DX label,Minor chord candidate
+56,ST-74,dx-rrpiano2.maj,ST-74/dx-rrpiano2.maj,1580,1580,12CFC93ED6C4,RAW,unknown,unknown,PIANO_CHORD,one_shot,Yamaha DX label,Major chord candidate
+57,ST-44,pluckorgan(037),ST-44/pluckorgan(037),6704,6656,138DC90B68A9,8SVX,10000,start1424 length5232,ORGAN_PLUCK,loop,Generic organ label,Embedded sustain loop
+58,ST-88,tweakorgan1,ST-88/tweakorgan1,5605,5605,910D6F42AE5A,RAW,unknown,unknown,ORGAN,loop_candidate,Generic organ label,Odd length must be padded in bank
+59,ST-59,juno pick,ST-59/juno pick,598,598,A79B133001F4,RAW,unknown,unknown,PLUCK,one_shot_or_loop,Roland Juno label,Extremely compact pluck
+60,ST-A5,2-korgzup1,ST-A5/2-korgzup1,1940,1836,1716C24F4385,8SVX,16726,none,PLUCK_EFFECT,one_shot,Korg label,Short upward effect/pluck candidate
+61,ST-01,SineCZ,ST-01/SineCZ,3900,3900,4FCEE4777163,RAW,unknown,unknown,CHIP_SOFT,loop_candidate,Casio CZ label,Sine-like mapping candidate
+62,ST-01,KorgFilter,ST-01/KorgFilter,3400,3400,2157BA1C1E8F,RAW,unknown,unknown,CHIP_FILTER,loop_candidate,Korg label,Harsh/filter mapping candidate
+63,ST-74,d50-ochestrahit,ST-74/d50-ochestrahit,12288,12288,A62BF40B9AB8,RAW,unknown,unknown,ORCHESTRA_HIT,one_shot,Roland D-50 label,Large effect candidate
+64,ST-44,d50nihil(047),ST-44/d50nihil(047),5680,5632,1634991C0D08,8SVX,10000,start2 length5630,EFFECT,loop,Roland D-50 label,Almost whole-sample loop; audition as texture

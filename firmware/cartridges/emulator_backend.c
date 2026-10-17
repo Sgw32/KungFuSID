@@ -1,6 +1,8 @@
 #include "emulator_backend.h"
 
 #include "ay3_backend.h"
+#include "amiga_backend.h"
+#include "amiga_sample_bank.h"
 #include "irq.h"
 #include "xparam_eeprom.h"
 
@@ -8,6 +10,7 @@ enum
 {
     EMULATOR_BACKEND_SID = 0,
     EMULATOR_BACKEND_AY3 = 1,
+    EMULATOR_BACKEND_AMIGA = 2,
 };
 
 static void sid_backend_write(uint8_t address, uint8_t value)
@@ -25,7 +28,14 @@ void emulator_backend_init(void)
 {
     /* Selection is intentionally performed once at boot. The audio IRQ only
      * makes an indirect call and never branches on the selected backend. */
-    if (kungfusid_parameters.emulator_backend.value == EMULATOR_BACKEND_AY3)
+    if (kungfusid_parameters.emulator_backend.value == EMULATOR_BACKEND_AMIGA &&
+        amiga_sample_bank_available())
+    {
+        emulator_backend_cycle_handler = amiga_backend_cycle;
+        emulator_backend_write_handler = amiga_backend_write;
+        emulator_backend_reset_handler = amiga_backend_reset;
+    }
+    else if (kungfusid_parameters.emulator_backend.value == EMULATOR_BACKEND_AY3)
     {
         emulator_backend_cycle_handler = ay3_backend_cycle;
         emulator_backend_write_handler = ay3_backend_write;

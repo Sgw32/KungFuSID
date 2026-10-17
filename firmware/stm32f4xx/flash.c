@@ -24,6 +24,8 @@
 
 #define FLASH_KEYR_KEY1     0x45670123
 #define FLASH_KEYR_KEY2     0xCDEF89AB
+#define FLASH_ERROR_FLAGS   (FLASH_SR_WRPERR | FLASH_SR_PGAERR | \
+                             FLASH_SR_PGPERR | FLASH_SR_PGSERR)
 
 static void flash_unlock()
 {
@@ -65,10 +67,10 @@ static void flash_sector_erase(u8 sector)
     while (FLASH->SR & FLASH_SR_BSY);
 }
 
-static void flash_program(void *dest, void *src, size_t bytes)
+static void flash_program(void *dest, const void *src, size_t bytes)
 {
     volatile u32 *dest_ptr = (u32 *)dest;
-    u32 *src_ptr = (u32 *)src;
+    const u32 *src_ptr = (const u32 *)src;
 
     // Wait if a flash memory operation is in progress
     while (FLASH->SR & FLASH_SR_BSY);
@@ -84,6 +86,50 @@ static void flash_program(void *dest, void *src, size_t bytes)
 
     // Deactivate flash programming
     FLASH->CR &= ~FLASH_CR_PG;
+}
+
+void flash_cache_reset(void)
+{
+    u32 cache = FLASH->ACR & FLASH_ACR_DCEN;
+    FLASH->ACR &= ~FLASH_ACR_DCEN;
+    FLASH->ACR |= FLASH_ACR_DCRST;
+    FLASH->ACR &= ~FLASH_ACR_DCRST;
+    FLASH->ACR |= cache;
+    __DSB();
+}
+
+bool flash_sector_erase_only(u8 sector)
+{
+    u32 primask;
+    if (sector > 11U)
+        return false;
+    primask = __get_PRIMASK();
+    __disable_irq();
+    flash_unlock();
+    FLASH->SR = FLASH_ERROR_FLAGS;
+    flash_sector_erase(sector);
+    flash_lock();
+    flash_cache_reset();
+    if (!primask)
+        __enable_irq();
+    return (FLASH->SR & FLASH_ERROR_FLAGS) == 0;
+}
+
+bool flash_program_aligned(void *dest, const void *src, size_t bytes)
+{
+    u32 primask;
+    if ((((uintptr_t)dest | (uintptr_t)src | bytes) & 3U) != 0U)
+        return false;
+    primask = __get_PRIMASK();
+    __disable_irq();
+    flash_unlock();
+    FLASH->SR = FLASH_ERROR_FLAGS;
+    flash_program(dest, src, bytes);
+    flash_lock();
+    flash_cache_reset();
+    if (!primask)
+        __enable_irq();
+    return (FLASH->SR & FLASH_ERROR_FLAGS) == 0;
 }
 
 static void flash_program_byte(u8 *dest, u8 byte)

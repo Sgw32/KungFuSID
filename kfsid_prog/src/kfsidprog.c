@@ -29,6 +29,7 @@
 #include "texts.h"
 #include "util.h"
 #include "write.h"
+#include "bank.h"
 
 static void showAbout(void);
 static void showComingSoon(void);
@@ -66,6 +67,12 @@ ScreenMenu menuMain =
         {
             "&Update firmware from BIN",
             checkWriteUpdateBIN,
+            returnTrue,
+            0
+        },
+        {
+            "Flash &Amiga sample bank",
+            flashAmigaSampleBank,
             returnTrue,
             0
         },
