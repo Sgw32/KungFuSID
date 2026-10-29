@@ -241,13 +241,26 @@ void amiga_backend_cycle(void)
         mix = dry + ((SID[24] & 0x70U) ? filter_out : filtered);
     }
 
-    /* Three signed 8-bit Paula channels, coarse 64-step volume and final
-     * 8-bit quantization provide the deliberately crunchy Amiga character. */
-    scaled = (mix * (SID[24] & 15U) * 5) / 12;
-    scaled = (scaled * sid_output_gain_percent) / 100;
+    /* Three signed 8-bit Paula channels and coarse 64-step volume provide the
+     * deliberately crunchy Amiga character.  The old fixed gain was
+     * mix*master*5/12.  The dedicated percent parameter now scales that gain;
+     * its default of 20 is exactly five times quieter, while 100 restores the
+     * original level.  All preceding stages remain int32_t and unclipped. */
+    /* Keep this chain explicitly signed.  SID[] and parameter values are
+     * unsigned; allowing one of them to control the usual arithmetic
+     * conversions turns a negative PCM mix into a very large positive value,
+     * which then clips every negative half-wave to DAC full scale. */
+    scaled = mix * (int32_t)(SID[24] & 15U);
+    scaled = (scaled *
+              (int32_t)kungfusid_parameters.amiga_mix_volume_percent.value) /
+             240;
+    scaled = (scaled * (int32_t)sid_output_gain_percent) / 100;
+    /* This is the only audio bound: clamp to the 12-bit DAC around midpoint.
+     * Keep all 12 DAC bits.  The samples themselves retain their Paula-like
+     * 8-bit character, while forcing the final value to 16-count steps would
+     * turn low gain settings into a two-level, badly distorted waveform. */
     if (scaled < -2048) scaled = -2048;
     if (scaled > 2047) scaled = 2047;
-    scaled &= ~15;
     main_volume = (uint16_t)(scaled + 2048);
     main_volume_32bit = main_volume;
     SID[27] = (uint8_t)(amiga_voice[2].oscillator >> 16);

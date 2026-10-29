@@ -4,6 +4,7 @@ import math
 import sys
 
 SECTOR_SIZE = 16 * 1024
+MAX_FIRMWARE_SIZE = 4 * SECTOR_SIZE
 
 def format_c_array(data: bytes, bytes_per_line: int = 16) -> str:
     lines = []
@@ -27,6 +28,12 @@ def main() -> int:
     data = input_path.read_bytes()
     size = len(data)
     sector_count = math.ceil(size / SECTOR_SIZE)
+
+    if size > MAX_FIRMWARE_SIZE:
+        print(f"error: {input_path.name} is {size} bytes; the in-system firmware protocol accepts at most 65536 bytes")
+        print("use firmware/build/KungFuSID_v*.bin, not the _all.bin factory image")
+        print("the installed Amiga sample bank is preserved by firmware-only updates")
+        return 1
 
     h_path = Path(f"{prefix}.h")
     c_path = Path(f"{prefix}.c")
@@ -60,9 +67,6 @@ const uint8_t firmware_blob[] = {{
     print(f"generated {c_path}")
     print(f"blob size: {size} bytes")
     print(f"sector count: {sector_count}")
-
-    if sector_count > 4:
-        print("warning: target updater may only support sectors 0..3 unless FW_UPDATE_SECTOR_COUNT is increased")
 
     return 0
 

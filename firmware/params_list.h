@@ -51,10 +51,20 @@ extern "C" {
         output_gain_percent, \
         .p_name = "output_gain_percent", \
         .p_info = "Master output gain in percent", \
-        .min = 10, \
+        .min = 5, \
         .max = 200, \
         .step_size = 5, \
         .value = 100, \
+    ) \
+    PARAM( \
+        U8, \
+        amiga_mix_volume_percent, \
+        .p_name = "amiga_mix_volume_percent", \
+        .p_info = "Amiga mixer gain; 20=new default", \
+        .min = 5, \
+        .max = 100, \
+        .step_size = 5, \
+        .value = 20, \
     ) \
     PARAM( \
         U8, \

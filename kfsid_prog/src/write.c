@@ -49,6 +49,7 @@
 static char fileVersion[17] = "--";
 static unsigned long fileSize;
 static uint8_t fileSectors;
+static uint8_t fileTooLarge;
 
 const char* firmwareFileVersion(void)
 {
@@ -170,13 +171,17 @@ static uint8_t inspectOpenFirmware(void)
     int nBytes;
 
     fileSize = 0;
+    fileTooLarge = 0;
     fileVersion[0] = '\0';
 
     while ((nBytes = utilRead(BLOCK_BUFFER, 0x100)) > 0)
     {
         fileSize += (unsigned int)nBytes;
         if (fileSize > KFSID_FW_MAX_SIZE)
+        {
+            fileTooLarge = 1;
             return 0;
+        }
 
         for (i = 0; i < (uint16_t)nBytes; ++i)
         {
@@ -250,7 +255,8 @@ static uint8_t selectFirmwareFile(void)
         utilCloseFile();
         strcpy(fileVersion, "Invalid");
         refreshMainScreen();
-        screenPrintSimpleDialog(apStrInvalidFirmware);
+        screenPrintSimpleDialog(fileTooLarge ? apStrFactoryFirmware :
+                                               apStrInvalidFirmware);
         return 0;
     }
     utilCloseFile();

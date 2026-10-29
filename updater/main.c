@@ -7,7 +7,7 @@
 #define FW_REG                  54301u      /* $D41D = $D400 + 29 */
 #define FW_UPDATE_START_MAGIC   0xA5
 #define FW_UPDATE_START_ACK     0x5A
-#define FW_UPDATE_END_ACK       0x5A
+#define FW_UPDATE_END_ACK       0xE5
 
 #define FW_UPDATE_SECTOR_SIZE   (16UL * 1024UL)
 
@@ -18,6 +18,10 @@
 #define DELAY_BEFORE_FINAL_ACK  4000u
 
 #define MAX_READ_RETRIES        3u
+
+#if FW_BLOB_SECTOR_COUNT > 4
+#error "Use the firmware-only .bin. The _all.bin factory image is not supported."
+#endif
 
 static void print_hex8(uint8_t v)
 {
@@ -342,11 +346,11 @@ int main(void)
         }
     }
 
-    // if (!fw_finalize()) {
-    //     cputs("Update failed at finalize.");
-    //     print_crlf();
-    //     return 0;
-    // }
+    if (!fw_finalize()) {
+        cputs("Update failed at finalize.");
+        print_crlf();
+        return 0;
+    }
 
     gotoxy(0, 22);
     cputs("Firmware update complete.");

@@ -65,6 +65,15 @@ const char* apStrInvalidFirmware[] =
     NULL
 };
 
+const char* apStrFactoryFirmware[] =
+{
+    "The _all.bin factory image cannot",
+    "be installed by the C64 updater.",
+    "Select the firmware-only .bin file.",
+    "Your Amiga sample bank is retained.",
+    NULL
+};
+
 const char* apStrOutOfMemory[] =
 {
     "Out of memory.",

@@ -7,6 +7,7 @@ extern const char* apStrAskErase[];
 extern const char* apStrFlashWriteFailed[];
 extern const char* apStrFileOpenError[];
 extern const char* apStrInvalidFirmware[];
+extern const char* apStrFactoryFirmware[];
 extern const char* apStrOutOfMemory[];
 extern const char* apStrWriteComplete[];
 extern const char* apStrDirFull[];

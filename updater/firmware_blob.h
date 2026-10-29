@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define FW_BLOB_SIZE 10600UL
-#define FW_BLOB_SECTOR_COUNT 1u
+#define FW_BLOB_SIZE 251608UL
+#define FW_BLOB_SECTOR_COUNT 16u
 
 extern const uint8_t firmware_blob[];
 
