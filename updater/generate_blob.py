@@ -19,7 +19,7 @@ def main() -> int:
         return 1
 
     input_path = Path(sys.argv[1])
-    prefix = sys.argv[2] if len(sys.argv) >= 3 else "firmware_blob"
+    prefix = Path(sys.argv[2]) if len(sys.argv) >= 3 else Path("firmware_blob")
 
     if not input_path.exists():
         print(f"error: file not found: {input_path}")
@@ -37,9 +37,13 @@ def main() -> int:
 
     h_path = Path(f"{prefix}.h")
     c_path = Path(f"{prefix}.c")
+    guard = "".join(
+        character if character.isalnum() else "_"
+        for character in prefix.name.upper()
+    ) + "_H"
 
-    h_text = f"""#ifndef {prefix.upper()}_H
-#define {prefix.upper()}_H
+    h_text = f"""#ifndef {guard}
+#define {guard}
 
 #include <stdint.h>
 
@@ -53,7 +57,7 @@ extern const uint8_t firmware_blob[];
 
     c_array = format_c_array(data if data else b"\x00")
 
-    c_text = f"""#include "{prefix}.h"
+    c_text = f"""#include "{h_path.name}"
 
 const uint8_t firmware_blob[] = {{
 {c_array}
