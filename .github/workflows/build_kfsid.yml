@@ -47,9 +47,13 @@ jobs:
 
       - name: Build updater from fresh firmware binary
         run: |
-          rm -f updater/*.bin
-          cp firmware/build/*.bin updater/
-          python3 updater/generate_blob.py updater/*.bin
+          firmware_bin="firmware/build/KungFuSID_v${VERSION}.bin"
+          if [ ! -f "$firmware_bin" ]; then
+            echo "Firmware-only image not found: $firmware_bin"
+            exit 1
+          fi
+          echo "Embedding firmware-only image: $firmware_bin"
+          python3 updater/generate_blob.py "$firmware_bin" updater/firmware_blob
           cd updater
           make
 
